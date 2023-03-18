@@ -8,5 +8,5 @@ For the complete technical overview see [link](https://github.com/Keith-Dao/Neur
 
 To set up the project:
 
-1. Create and activate a python virtual environment, follow [link](https://docs.python.org/3/library/venv.html#creating-virtual-environments) for instructions
+1. Create and activate a python virtual environment, follow [link](https://docs.python.org/3/tutorial/venv.html#creating-virtual-environments) for instructions
 2. Install the packages using `pip install -r requirements.txt`
