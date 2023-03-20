@@ -17,4 +17,4 @@ install-test: test_requirements.txt
 	pip install -r $<
 
 test: install-test
-	pytest -v
+	pytest -v --cov=neural_net --cov-report term-missing
