@@ -134,7 +134,6 @@ class TestLinear:
         layer.eval = False
         assert not layer.eval
         assert layer._input is None
-
     # End init tests
 
     # Forward pass tests
@@ -249,4 +248,39 @@ class TestLinear:
         layer.eval = False
         _ = layer(X)
         layer.backward(grad)
+
+    @pytest.mark.parametrize("layer_, data", [
+        (layer, data)
+        for layer in ("layer", "layer_with_relu")
+        for data in ("small", "large", "large_with_negatives")
+    ])
+    def test_update(self, layer_, data, request):
+        """
+        Test parameter update.
+        """
+        X, Y_true = request.getfixturevalue(data)
+        layer_ = request.getfixturevalue(layer_)
+        _ = layer_(X)
+        grad = np.ones_like(Y_true)
+        learning_rate = 1e-4
+        _, (weight_grad, bias_grad) = layer_.backward(grad)
+
+        assert np.array_equal(
+            layer_._weight,
+            np.arange(1, 7, dtype=float).reshape(2, 3)
+        )
+        assert np.array_equal(
+            layer_._bias,
+            np.arange(1, 3, dtype=float)
+        )
+        layer_.update(grad, learning_rate)
+        assert np.array_equal(
+            layer_._weight,
+            np.arange(1, 7, dtype=float).reshape(
+                2, 3) - learning_rate * weight_grad
+        )
+        assert np.array_equal(
+            layer_._bias,
+            np.arange(1, 3, dtype=float) - learning_rate * bias_grad
+        )
     # End backward tests
