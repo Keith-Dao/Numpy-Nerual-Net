@@ -1,4 +1,4 @@
-.PHONY: install update clean
+.PHONY: install update clean test
 .DEFAULT_GOAL := default
 default:
 	@ echo "Please provide a command."
@@ -12,3 +12,9 @@ update:
 
 clean:
 	rm -rf .env
+
+install-test: test_requirements.txt 
+	pip install -r $<
+
+test: install-test
+	pytest -v
