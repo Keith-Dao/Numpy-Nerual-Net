@@ -66,7 +66,7 @@ class ReLU(ActivationFunction):
 
     def forward(self, input_: NDArray) -> NDArray:
         super().forward(input_)
-        return (input_ > 0).astype(input_.dtype)
+        return (input_ > 0).astype(input_.dtype) * input_
 
     def backward(self) -> NDArray:
         super().backward()
