@@ -92,10 +92,10 @@ class Linear:
             the gradients with respect to each parameter.
         """
         if self._input is None:
-            raise ValueError(
-                "forward must be called before backward."
+            raise (
+                RuntimeError("forward must be called before backward.")
                 if not self.eval
-                else "backward cannot be called on layers set in eval mode."
+                else ValueError("backward cannot be called on layers set in eval mode.")
             )
 
         # Calculate grad
