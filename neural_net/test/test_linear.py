@@ -137,7 +137,7 @@ class TestLinear:
 
     # End init tests
 
-    # Forward tests
+    # Forward pass tests
     @pytest.mark.parametrize("data", [
         "small", "large", "large_with_negatives"
     ])
@@ -160,9 +160,9 @@ class TestLinear:
         Y = layer_with_relu(X)
         Y_true = Y_true * (Y_true > 0)
         assert np.array_equal(Y, Y_true)
-    # End forward tests
+    # End forward pass tests
 
-    # Backward tests
+    # Backward pass tests
     @pytest.mark.parametrize("data", [
         "small", "large", "large_with_negatives"
     ])
@@ -238,7 +238,7 @@ class TestLinear:
     ])
     def test_backward_call_with_eval(self, layer_, data, request):
         """
-        Test attempting to call backward before forward.
+        Test attempting to call backward with layer set to evaluation mode.
         """
         layer = request.getfixturevalue(layer_)
         layer.eval = True
