@@ -18,7 +18,8 @@ class TestLinear:
     @pytest.fixture
     def layer(self) -> Linear:
         """
-        Create a linear layer with 3 input channels, 2 output channels and no activation function.
+        Create a linear layer with 3 input channels, 2 output channels
+        and no activation function.
         """
         layer = Linear(3, 2)
         layer.load_params(
@@ -45,7 +46,10 @@ class TestLinear:
         """
         Create a small input (1, 3) and output (1, 2) pair.
         """
-        return np.arange(1, 4, dtype=float).reshape(1, 3), np.array([[15, 34]], dtype=float)
+        return (
+            np.arange(1, 4, dtype=float).reshape(1, 3),
+            np.array([[15, 34]], dtype=float)
+        )
 
     @pytest.fixture
     def large(self) -> tuple[NDArray, NDArray]:
@@ -69,7 +73,8 @@ class TestLinear:
     @pytest.fixture
     def large_with_negatives(self) -> tuple[NDArray, NDArray]:
         """
-        Create a large input (10, 3) and output (10, 2) pair that contains negative numbers.
+        Create a large input (10, 3) and output (10, 2) pair that contains
+        negative numbers.
         """
         return (
             np.arange(-10, 20, dtype=float).reshape(10, 3),
@@ -192,7 +197,8 @@ class TestLinear:
     ])
     def test_backward_2(self, layer_with_relu, data, request):
         """
-        Test the backward pass for the linear layer with ReLU and multiple inputs.
+        Test the backward pass for the linear layer with ReLU and multiple
+        inputs.
         """
         X, Y_true = request.getfixturevalue(data)
         _ = layer_with_relu(X)
