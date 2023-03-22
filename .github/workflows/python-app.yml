@@ -32,4 +32,4 @@ jobs:
           pylint $(git ls-files 'neural_net/*.py')
       - name: Test with pytest
         run: |
-          pytest
+          pytest -v
