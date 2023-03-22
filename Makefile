@@ -19,4 +19,4 @@ install-test: test_requirements.txt
 test: install-test
 	pytest -v --cov=neural_net --cov-report term-missing
 	flake8 neural_net/
-	pylint neural_net/
+	pylint $$(git ls-files 'neural_net/*.py')
