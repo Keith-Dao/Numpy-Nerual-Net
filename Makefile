@@ -3,10 +3,10 @@
 default:
 	@ echo "Please provide a command."
 
-install:
+install-env:
 	python -m venv .env
 
-update: 
+install: 
 	pip install --upgrade pip
 	pip install -r requirements.txt
 
