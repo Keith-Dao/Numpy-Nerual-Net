@@ -12,6 +12,7 @@ class ActivationFunction(ABC):
     Abstract activation function.
     """
 
+    # region Abstract methods
     @abstractmethod
     def forward(self, input_: NDArray) -> NDArray:
         """
@@ -34,13 +35,18 @@ class ActivationFunction(ABC):
         """
         if self._input is None:
             raise ValueError("backward cannot be called before forward.")
+    # endregion Abstract methods
 
+    # region Setup
     def __init__(self) -> None:
         super().__init__()
         self._input: NDArray | None = None
+    # endregion Setup
 
+    # region Built-ins
     def __call__(self, input_: NDArray) -> NDArray:
         return self.forward(input_)
+    # endregion Built-ins
 
 
 class NoActivation(ActivationFunction):
