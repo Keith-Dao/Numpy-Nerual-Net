@@ -14,7 +14,6 @@ class Linear:
     """
     A linear layer.
     """
-    idCounter = 0
 
     # Setup
     def __init__(
@@ -26,9 +25,6 @@ class Linear:
         bias_init: Callable[..., NDArray] = np.random.normal,
         activation: Type[act.ActivationFunction] = act.NoActivation,
     ) -> None:
-        self.name = f"Linear layer {Linear.idCounter}"
-        Linear.idCounter += 1
-
         # Forward pass
         self._weight: NDArray = weight_init(size=(out_, in_))
         self._bias: NDArray = bias_init(size=out_)
@@ -208,7 +204,4 @@ class Linear:
     # Built-ins
     def __call__(self, input_: NDArray) -> NDArray:
         return self.forward(input_)
-
-    def __hash__(self) -> int:
-        return hash(self.name)
     # End built-ins

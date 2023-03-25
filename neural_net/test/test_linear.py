@@ -453,16 +453,3 @@ class TestLinear:
             np.arange(1, 3, dtype=float) - learning_rate * bias_grad
         )
     # End backward tests
-
-    # Built in tests
-    def test_hash(self):
-        """
-        Test the hash function.
-        """
-        next_id = Linear.idCounter
-        layer = Linear(1, 1)
-        assert hash(layer) == hash(f"Linear layer {next_id}")
-
-        another_layer = Linear(1, 1)
-        assert hash(layer) != hash(another_layer)
-    # End built in tests
