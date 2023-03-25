@@ -51,7 +51,62 @@ class Linear:
             self._input = None
         self._eval = eval_
 
-    def load_params(self, weight: NDArray, bias: NDArray) -> None:
+    def _load_weight(self, weight: list[list[float]] | NDArray) -> None:
+        """
+        Loads weight for the layer.
+
+        Args:
+            weight: The weight values
+        """
+        new_weight = np.array(weight)
+        if new_weight.shape != self._weight.shape:
+            raise ValueError(
+                f"The new weight has a shape of ${new_weight.shape},"
+                f" expected {self._weight.shape}."
+            )
+        self._weight = new_weight
+
+    def _load_bias(self, bias: list[float] | NDArray) -> None:
+        """
+        Loads bias for the layer.
+
+        Args:
+            bias: The bias values
+        """
+        new_bias = np.array(bias)
+        if new_bias.shape != self._bias.shape:
+            raise ValueError(
+                f"The new bias has a shape of ${new_bias.shape},"
+                f" expected {self._bias.shape}."
+            )
+        self._bias = new_bias
+
+    def _load_activation(self, activation_function: str) -> None:
+        """
+        Loads the activation function for the layer.
+
+        Args:
+            activation_function: The name of the activation function class
+        """
+        if not isinstance(activation_function, str):
+            raise TypeError(
+                f"activation_function is of type"
+                f" {type(activation_function).__name__}, expected str."
+            )
+        try:
+            self._activation = getattr(act, activation_function)()
+        except AttributeError as exc:
+            raise ValueError(
+                f"{activation_function} is not a valid activation function."
+            ) from exc
+
+    def load_params(
+        self,
+        *,
+        weight: NDArray | list[list[float]] | None = None,
+        bias: NDArray | list[float] | None = None,
+        activation_function: str | None = None
+    ) -> None:
         """
         Load parameters for the layer.
 
@@ -59,8 +114,14 @@ class Linear:
             weight: The weight values
             bias: The bias values
         """
-        self._weight = weight
-        self._bias = bias
+        if weight is not None:
+            self._load_weight(weight)
+
+        if bias is not None:
+            self._load_bias(bias)
+
+        if activation_function is not None:
+            self._load_activation(activation_function)
 
     def to_dict(self) -> dict[str, Any]:
         """
@@ -77,7 +138,7 @@ class Linear:
         return {
             "weight": self._weight.tolist(),
             "bias": self._bias.tolist(),
-            "activation": self._activation.__class__.__name__
+            "activation": type(self._activation).__name__
         }
     # End setup
 

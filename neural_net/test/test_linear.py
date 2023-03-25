@@ -9,7 +9,8 @@ from neural_net.linear import Linear
 from neural_net.activation_functions import NoActivation, ReLU
 
 
-# pylint: disable=protected-access, invalid-name
+# pylint: disable=protected-access, invalid-name, too-many-public-methods
+# pyright: reportGeneralTypeIssues=false
 class TestLinear:
     """
     Linear layer class tester.
@@ -23,8 +24,8 @@ class TestLinear:
         """
         layer = Linear(3, 2)
         layer.load_params(
-            np.arange(1, 7, dtype=float).reshape(2, 3),
-            np.arange(1, 3, dtype=float)
+            weight=np.arange(1, 7, dtype=float).reshape(2, 3),
+            bias=np.arange(1, 3, dtype=float)
         )
         return layer
 
@@ -34,10 +35,11 @@ class TestLinear:
         Create a linear layer with 3 input channels, 2 output channels
         and a ReLU activation function.
         """
-        layer = Linear(3, 2, activation=ReLU)
+        layer = Linear(3, 2)
         layer.load_params(
-            np.arange(1, 7, dtype=float).reshape(2, 3),
-            np.arange(1, 3, dtype=float)
+            weight=np.arange(1, 7, dtype=float).reshape(2, 3),
+            bias=np.arange(1, 3, dtype=float),
+            activation_function="ReLU"
         )
         return layer
 
@@ -166,17 +168,122 @@ class TestLinear:
         assert not layer.eval
         assert layer._input is None
 
-    def test_load_params(self):
+    def test_load_params_all(self):
         """
-        Tests the load parameter method.
+        Tests the load parameter method for all parameters.
         """
         in_, out_ = 3, 2
-        layer = Linear(in_, out_, activation=ReLU)
+        layer = Linear(in_, out_)
         weight = np.arange(1, 7, dtype=float).reshape(2, 3)
         bias = np.arange(1, 3, dtype=float)
-        layer.load_params(weight, bias)
+        layer.load_params(weight=weight, bias=bias, activation_function="ReLU")
         assert np.array_equal(layer._weight, weight)
         assert np.array_equal(layer._bias, bias)
+        assert isinstance(layer._activation, ReLU)
+
+    @pytest.mark.parametrize("weight", [
+        np.arange(1, 7, dtype=float).reshape(2, 3),
+        [[1, 2, 3], [4, 5, 6]]
+    ])
+    def test_load_params_weight(self, weight):
+        """
+        Tests the load parameter method for the weight parameter with a list.
+        """
+        in_, out_ = 3, 2
+        layer = Linear(in_, out_)
+        prev_weight = layer._weight
+        prev_bias = layer._bias
+        prev_activation = layer._activation
+
+        layer.load_params(weight=weight)
+        assert np.array_equal(layer._weight, weight)
+        assert not np.array_equal(layer._weight, prev_weight)
+        assert np.array_equal(layer._bias, prev_bias)
+        assert layer._activation == prev_activation
+
+    @pytest.mark.parametrize("weight", [
+        np.arange(1, 7, dtype=float).reshape(3, 2),
+        np.arange(1, 7, dtype=float),
+        [1],
+        [[1, 2, "a"]]
+    ])
+    def test_load_params_weight_error(self, weight):
+        """
+        Tests the load parameter method for the weight parameter with
+        invalid values.
+        """
+        in_, out_ = 3, 2
+        layer = Linear(in_, out_)
+        with pytest.raises(ValueError):
+            layer.load_params(weight=weight)
+
+    @pytest.mark.parametrize("bias", [np.arange(1, 3, dtype=float), [1, 2]])
+    def test_load_params_bias(self, bias):
+        """
+        Tests the load parameter method for the bias parameter.
+        """
+        in_, out_ = 3, 2
+        layer = Linear(in_, out_)
+        prev_weight = layer._weight
+        prev_bias = layer._bias
+        prev_activation = layer._activation
+
+        layer.load_params(bias=bias)
+        assert np.array_equal(layer._weight, prev_weight)
+        assert np.array_equal(layer._bias, bias)
+        assert not np.array_equal(layer._bias, prev_bias)
+        assert layer._activation == prev_activation
+
+    @pytest.mark.parametrize("bias", [
+        np.arange(1, 3, dtype=float).reshape(2, 1),
+        [[1, 2]],
+        [1],
+        [1, 2, "a"]
+    ])
+    def test_load_params_bias_shape_error(self, bias):
+        """
+        Tests the load parameter method for the bias parameter with
+        invalid data.
+        """
+        in_, out_ = 3, 2
+        layer = Linear(in_, out_)
+        with pytest.raises(ValueError):
+            layer.load_params(bias=bias)
+
+    def test_load_params_activation(self):
+        """
+        Tests the load parameter method for the activation function.
+        """
+        in_, out_ = 3, 2
+        layer = Linear(in_, out_)
+        prev_weight = layer._weight
+        prev_bias = layer._bias
+        prev_activation = layer._activation
+        layer.load_params(activation_function="ReLU")
+        assert np.array_equal(layer._weight, prev_weight)
+        assert np.array_equal(layer._bias, prev_bias)
+        assert layer._activation != prev_activation
+        assert isinstance(layer._activation, ReLU)
+
+    @pytest.mark.parametrize("activation_function, exception", [
+        ("ggopn@03m", ValueError),
+        (ReLU, TypeError),
+        (ReLU(), TypeError),
+        (1, TypeError)
+    ])
+    def test_load_params_activation_error(
+        self,
+        activation_function,
+        exception
+    ):
+        """
+        Tests the load parameter method for the activation function
+        with invalid inputs.
+        """
+        in_, out_ = 3, 2
+        layer = Linear(in_, out_)
+        with pytest.raises(exception):
+            layer.load_params(activation_function=activation_function)
 
     @pytest.mark.parametrize("layer_, activation", [
         ("layer", "NoActivation"),
