@@ -8,12 +8,13 @@ import pytest
 from neural_net.activation_functions import NoActivation, ReLU
 
 
+# pylint: disable=protected-access, invalid-name
 class TestActivationFunctions:
     """
     Activation function tests.
     """
-    # pylint: disable=protected-access, invalid-name
 
+    # region Fixtures
     @pytest.fixture
     def no_activation(self) -> tuple[NoActivation, NDArray, NDArray, NDArray]:
         """
@@ -45,8 +46,9 @@ class TestActivationFunctions:
             Y,
             grad
         )
+    # endregion Fixtures
 
-    # Forward test
+    # region Forward tests
     @pytest.mark.parametrize("data", ["no_activation", "relu"])
     def test_forward(self, data, request):
         """
@@ -54,9 +56,9 @@ class TestActivationFunctions:
         """
         function, X, Y, _ = request.getfixturevalue(data)
         assert np.array_equal(function(X), Y)
-    # End forward test
+    # endregion Forward tests
 
-    # Backward test
+    # region Backward tests
     @pytest.mark.parametrize("data", ["no_activation", "relu"])
     def test_backward(self, data, request):
         """
@@ -76,4 +78,4 @@ class TestActivationFunctions:
             function.backward()
         function(X)
         function.backward()
-    # End backward test
+    # endregion backward tests

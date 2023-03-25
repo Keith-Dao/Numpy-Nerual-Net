@@ -15,7 +15,7 @@ class Linear:
     A linear layer.
     """
 
-    # Setup
+    # region Setup
     def __init__(
         self,
         in_: int,
@@ -33,7 +33,9 @@ class Linear:
 
         # Backward pass
         self._input: NDArray | None = None
+    # endregion Setup
 
+    # region Evaluation mode
     @property
     def eval(self):
         """
@@ -46,7 +48,9 @@ class Linear:
         if eval_ != self._eval:
             self._input = None
         self._eval = eval_
+    # endregion Evaluation mode
 
+    # region Load
     def _load_weight(self, weight: list[list[float]] | NDArray) -> None:
         """
         Loads weight for the layer.
@@ -118,7 +122,9 @@ class Linear:
 
         if activation_function is not None:
             self._load_activation(activation_function)
+    # endregion load
 
+    # region Save
     def to_dict(self) -> dict[str, Any]:
         """
         Get all relevant attributes in a serialisable format.
@@ -136,9 +142,9 @@ class Linear:
             "bias": self._bias.tolist(),
             "activation": type(self._activation).__name__
         }
-    # End setup
+    # endregion Save
 
-    # Forward pass
+    # region Forward pass
     def forward(self, input_) -> NDArray:
         """
         Perform the forward pass for the layer.
@@ -151,9 +157,9 @@ class Linear:
         self._input = input_ if not self.eval else None
         output_: NDArray = input_ @ self._weight.T + self._bias
         return self._activation(output_)
-    # End forward pass
+    # endregion Forward pass
 
-    # Backward pass
+    # region Backward pass
     def backward(self, grad: NDArray) -> tuple[NDArray, tuple[NDArray, ...]]:
         """
         Perform the backward pass for the layer.
@@ -199,9 +205,9 @@ class Linear:
         self._weight -= learning_rate * weight_grad
         self._bias -= learning_rate * bias_grad
         return input_grad
-    # End backward pass
+    # endregion Backward pass
 
-    # Built-ins
+    # region Built-ins
     def __call__(self, input_: NDArray) -> NDArray:
         return self.forward(input_)
-    # End built-ins
+    # endregion built-ins

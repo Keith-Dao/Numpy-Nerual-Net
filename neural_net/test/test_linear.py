@@ -15,7 +15,8 @@ class TestLinear:
     """
     Linear layer class tester.
     """
-    # Fixtures
+
+    # region Fixtures
     @pytest.fixture
     def layer(self) -> Linear:
         """
@@ -91,9 +92,9 @@ class TestLinear:
                       [93.,  229.],
                       [111.,  274.]], dtype=float)
         )
-    # End fixtures
+    # endregion fixtures
 
-    # Init tests
+    # region Init tests
     def test_init(self):
         """
         Tests the layer init.
@@ -151,7 +152,9 @@ class TestLinear:
         )
         assert np.array_equal(layer._weight, np.arange(1, 7).reshape(2, 3))
         assert np.array_equal(layer._bias, np.arange(1, 3))
+    # endregion Init tests
 
+    # region Evaluation mode tests
     def test_set_eval(self, layer):
         """
         Test setting the evaluation mode.
@@ -168,6 +171,31 @@ class TestLinear:
         assert not layer.eval
         assert layer._input is None
 
+    @pytest.mark.parametrize("layer_, data", [
+        (layer, data)
+        for layer in ("layer", "layer_with_relu")
+        for data in ("small", "large", "large_with_negatives")
+    ])
+    def test_backward_call_with_eval(self, layer_, data, request):
+        """
+        Test attempting to call backward with layer set to evaluation mode.
+        """
+        layer = request.getfixturevalue(layer_)
+        layer.eval = True
+        X, Y_true = request.getfixturevalue(data)
+        grad = np.ones_like(Y_true)
+        with pytest.raises(RuntimeError):
+            layer.backward(grad)
+        layer(X)
+        layer.eval = False
+        with pytest.raises(RuntimeError):
+            layer.backward(grad)
+        layer(X)
+        layer.backward(grad)
+
+    # endregion Evaluation mode tests
+
+    # region Load tests
     def test_load_params_all(self):
         """
         Tests the load parameter method for all parameters.
@@ -284,7 +312,9 @@ class TestLinear:
         layer = Linear(in_, out_)
         with pytest.raises(exception):
             layer.load_params(activation_function=activation_function)
+    # endregion Load tests
 
+    # region Save tests
     @pytest.mark.parametrize("layer_, activation", [
         ("layer", "NoActivation"),
         ("layer_with_relu", "ReLU")
@@ -299,9 +329,9 @@ class TestLinear:
             "bias": [1, 2],
             "activation": activation
         }
-    # End init tests
+    # endregion Save tests
 
-    # Forward pass tests
+    # region Forward pass tests
     @pytest.mark.parametrize("data", [
         "small", "large", "large_with_negatives"
     ])
@@ -324,9 +354,9 @@ class TestLinear:
         Y = layer_with_relu(X)
         Y_true = Y_true * (Y_true > 0)
         assert np.array_equal(Y, Y_true)
-    # End forward pass tests
+    # endregion forward pass tests
 
-    # Backward pass tests
+    # region Backward pass tests
     @pytest.mark.parametrize("data", [
         "small", "large", "large_with_negatives"
     ])
@@ -401,28 +431,6 @@ class TestLinear:
         for layer in ("layer", "layer_with_relu")
         for data in ("small", "large", "large_with_negatives")
     ])
-    def test_backward_call_with_eval(self, layer_, data, request):
-        """
-        Test attempting to call backward with layer set to evaluation mode.
-        """
-        layer = request.getfixturevalue(layer_)
-        layer.eval = True
-        X, Y_true = request.getfixturevalue(data)
-        grad = np.ones_like(Y_true)
-        with pytest.raises(RuntimeError):
-            layer.backward(grad)
-        layer(X)
-        layer.eval = False
-        with pytest.raises(RuntimeError):
-            layer.backward(grad)
-        layer(X)
-        layer.backward(grad)
-
-    @pytest.mark.parametrize("layer_, data", [
-        (layer, data)
-        for layer in ("layer", "layer_with_relu")
-        for data in ("small", "large", "large_with_negatives")
-    ])
     def test_update(self, layer_, data, request):
         """
         Test parameter update.
@@ -452,4 +460,4 @@ class TestLinear:
             layer_._bias,
             np.arange(1, 3, dtype=float) - learning_rate * bias_grad
         )
-    # End backward tests
+    # endregion backward tests
