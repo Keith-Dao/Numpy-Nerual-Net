@@ -213,7 +213,7 @@ class TestLinear:
         Test the backward pass for the linear layer.
         """
         X, Y_true = request.getfixturevalue(data)
-        _ = layer(X)
+        layer(X)
         grad = np.ones_like(Y_true)
 
         input_grad, (weight_grad, bias_grad) = layer.backward(grad)
@@ -239,7 +239,7 @@ class TestLinear:
         inputs.
         """
         X, Y_true = request.getfixturevalue(data)
-        _ = layer_with_relu(X)
+        layer_with_relu(X)
         grad = np.ones_like(Y_true)
         true_grad = Y_true > 0
 
@@ -271,7 +271,7 @@ class TestLinear:
         grad = np.ones_like(Y_true)
         with pytest.raises(RuntimeError):
             layer.backward(grad)
-        _ = layer(X)
+        layer(X)
         layer.backward(grad)
 
     @pytest.mark.parametrize("layer_, data", [
@@ -287,10 +287,13 @@ class TestLinear:
         layer.eval = True
         X, Y_true = request.getfixturevalue(data)
         grad = np.ones_like(Y_true)
-        with pytest.raises(ValueError):
+        with pytest.raises(RuntimeError):
             layer.backward(grad)
+        layer(X)
         layer.eval = False
-        _ = layer(X)
+        with pytest.raises(RuntimeError):
+            layer.backward(grad)
+        layer(X)
         layer.backward(grad)
 
     @pytest.mark.parametrize("layer_, data", [
@@ -304,7 +307,7 @@ class TestLinear:
         """
         X, Y_true = request.getfixturevalue(data)
         layer_ = request.getfixturevalue(layer_)
-        _ = layer_(X)
+        layer_(X)
         grad = np.ones_like(Y_true)
         learning_rate = 1e-4
         _, (weight_grad, bias_grad) = layer_.backward(grad)

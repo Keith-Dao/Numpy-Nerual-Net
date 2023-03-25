@@ -90,11 +90,16 @@ class Linear:
             The gradient with respect to the input and
             the gradients with respect to each parameter.
         """
+        if self.eval:
+            raise RuntimeError(
+                "Backward pass is not available for layers set in evaluation"
+                " mode."
+            )
+
         if self._input is None:
-            if not self.eval:
-                raise RuntimeError("forward must be called before backward.")
-            raise ValueError(
-                "backward cannot be called on layers set in eval mode."
+            raise RuntimeError(
+                "Backward pass is not available for layers that have not been"
+                " through the forward pass with evaluation mode turned off."
             )
 
         # Calculate grad
