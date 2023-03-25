@@ -2,7 +2,7 @@
 This module contains the linear layer.
 """
 from __future__ import annotations
-from typing import Type
+from typing import Any, Callable, Type
 
 import numpy as np
 from numpy.typing import NDArray
@@ -14,7 +14,6 @@ class Linear:
     """
     A linear layer.
     """
-    idCounter = 0
 
     # Setup
     def __init__(
@@ -22,17 +21,13 @@ class Linear:
         in_: int,
         out_: int,
         *,
+        weight_init: Callable[..., NDArray] = np.random.normal,
+        bias_init: Callable[..., NDArray] = np.random.normal,
         activation: Type[act.ActivationFunction] = act.NoActivation,
     ) -> None:
-        self.name = f"Linear layer {Linear.idCounter}"
-        Linear.idCounter += 1
-
         # Forward pass
-        self._weight: NDArray = np.ndarray(
-            (out_, in_),
-            dtype=np.float32
-        )
-        self._bias: NDArray = np.ndarray(out_, dtype=np.float32)
+        self._weight: NDArray = weight_init(size=(out_, in_))
+        self._bias: NDArray = bias_init(size=out_)
         self._activation: act.ActivationFunction = activation()
         self._eval: bool = False
 
@@ -52,7 +47,62 @@ class Linear:
             self._input = None
         self._eval = eval_
 
-    def load_params(self, weight: NDArray, bias: NDArray) -> None:
+    def _load_weight(self, weight: list[list[float]] | NDArray) -> None:
+        """
+        Loads weight for the layer.
+
+        Args:
+            weight: The weight values
+        """
+        new_weight = np.array(weight)
+        if new_weight.shape != self._weight.shape:
+            raise ValueError(
+                f"The new weight has a shape of ${new_weight.shape},"
+                f" expected {self._weight.shape}."
+            )
+        self._weight = new_weight
+
+    def _load_bias(self, bias: list[float] | NDArray) -> None:
+        """
+        Loads bias for the layer.
+
+        Args:
+            bias: The bias values
+        """
+        new_bias = np.array(bias)
+        if new_bias.shape != self._bias.shape:
+            raise ValueError(
+                f"The new bias has a shape of ${new_bias.shape},"
+                f" expected {self._bias.shape}."
+            )
+        self._bias = new_bias
+
+    def _load_activation(self, activation_function: str) -> None:
+        """
+        Loads the activation function for the layer.
+
+        Args:
+            activation_function: The name of the activation function class
+        """
+        if not isinstance(activation_function, str):
+            raise TypeError(
+                f"activation_function is of type"
+                f" {type(activation_function).__name__}, expected str."
+            )
+        try:
+            self._activation = getattr(act, activation_function)()
+        except AttributeError as exc:
+            raise ValueError(
+                f"{activation_function} is not a valid activation function."
+            ) from exc
+
+    def load_params(
+        self,
+        *,
+        weight: NDArray | list[list[float]] | None = None,
+        bias: NDArray | list[float] | None = None,
+        activation_function: str | None = None
+    ) -> None:
         """
         Load parameters for the layer.
 
@@ -60,8 +110,32 @@ class Linear:
             weight: The weight values
             bias: The bias values
         """
-        self._weight = weight
-        self._bias = bias
+        if weight is not None:
+            self._load_weight(weight)
+
+        if bias is not None:
+            self._load_bias(bias)
+
+        if activation_function is not None:
+            self._load_activation(activation_function)
+
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Get all relevant attributes in a serialisable format.
+
+        Attributes includes:
+            - weight -- weights as a two-dimensional list
+            - bias -- bias as a list
+            - activation -- name of the activation function as a string
+
+        Returns:
+            Attributes listed above as a dictionary.
+        """
+        return {
+            "weight": self._weight.tolist(),
+            "bias": self._bias.tolist(),
+            "activation": type(self._activation).__name__
+        }
     # End setup
 
     # Forward pass
@@ -91,11 +165,16 @@ class Linear:
             The gradient with respect to the input and
             the gradients with respect to each parameter.
         """
+        if self.eval:
+            raise RuntimeError(
+                "Backward pass is not available for layers set in evaluation"
+                " mode."
+            )
+
         if self._input is None:
-            if not self.eval:
-                raise RuntimeError("forward must be called before backward.")
-            raise ValueError(
-                "backward cannot be called on layers set in eval mode."
+            raise RuntimeError(
+                "Backward pass is not available for layers that have not been"
+                " through the forward pass with evaluation mode turned off."
             )
 
         # Calculate grad
@@ -125,7 +204,4 @@ class Linear:
     # Built-ins
     def __call__(self, input_: NDArray) -> NDArray:
         return self.forward(input_)
-
-    def __hash__(self) -> int:
-        return hash(self.name)
     # End built-ins
