@@ -92,7 +92,7 @@ class TestLinear:
     # End fixtures
 
     # Init tests
-    def test_init_1(self):
+    def test_init(self):
         """
         Tests the layer init.
         """
@@ -102,7 +102,7 @@ class TestLinear:
         assert layer._bias.shape == (out_, )
         assert isinstance(layer._activation, NoActivation)
 
-    def test_init_2(self):
+    def test_init_with_relu(self):
         """
         Tests the layer init with ReLU.
         """
@@ -111,6 +111,44 @@ class TestLinear:
         assert layer._weight.shape == (out_, in_)
         assert layer._bias.shape == (out_, )
         assert isinstance(layer._activation, ReLU)
+
+    def test_init_with_uniform_distribution(self):
+        """
+        Tests the layer init with uniform parameter distributions.
+
+        Given that it is difficult to test that the the sampling is correct,
+        this will only test that it initialises without a runtime error.
+        """
+        in_, out_ = 3, 2
+        layer = Linear(
+            in_,
+            out_,
+            weight_init=np.random.uniform,
+            bias_init=np.random.uniform
+        )
+        assert layer._weight.shape == (out_, in_)
+        assert layer._bias.shape == (out_, )
+
+    def test_init_with_custom_param_init(self):
+        """
+        Tests the layer init with a custom parameter init.
+        """
+        in_, out_ = 3, 2
+
+        def weight_init(*, size: tuple[int, int]) -> NDArray:
+            return np.arange(1, 1 + size[0] * size[1]).reshape(size)
+
+        def bias_init(*, size: int) -> NDArray:
+            return np.arange(1, 1 + size)
+
+        layer = Linear(
+            in_,
+            out_,
+            weight_init=weight_init,
+            bias_init=bias_init
+        )
+        assert np.array_equal(layer._weight, np.arange(1, 7).reshape(2, 3))
+        assert np.array_equal(layer._bias, np.arange(1, 3))
 
     def test_load_params(self):
         """
