@@ -150,18 +150,6 @@ class TestLinear:
         assert np.array_equal(layer._weight, np.arange(1, 7).reshape(2, 3))
         assert np.array_equal(layer._bias, np.arange(1, 3))
 
-    def test_load_params(self):
-        """
-        Tests the load parameter method.
-        """
-        in_, out_ = 3, 2
-        layer = Linear(in_, out_, activation=ReLU)
-        weight = np.arange(1, 7, dtype=float).reshape(2, 3)
-        bias = np.arange(1, 3, dtype=float)
-        layer.load_params(weight, bias)
-        assert np.array_equal(layer._weight, weight)
-        assert np.array_equal(layer._bias, bias)
-
     def test_set_eval(self, layer):
         """
         Test setting the evaluation mode.
@@ -177,6 +165,33 @@ class TestLinear:
         layer.eval = False
         assert not layer.eval
         assert layer._input is None
+
+    def test_load_params(self):
+        """
+        Tests the load parameter method.
+        """
+        in_, out_ = 3, 2
+        layer = Linear(in_, out_, activation=ReLU)
+        weight = np.arange(1, 7, dtype=float).reshape(2, 3)
+        bias = np.arange(1, 3, dtype=float)
+        layer.load_params(weight, bias)
+        assert np.array_equal(layer._weight, weight)
+        assert np.array_equal(layer._bias, bias)
+
+    @pytest.mark.parametrize("layer_, activation", [
+        ("layer", "NoActivation"),
+        ("layer_with_relu", "ReLU")
+    ])
+    def test_to_dict(self, layer_, activation, request):
+        """
+        Tests the to dict method.
+        """
+        layer_ = request.getfixturevalue(layer_)
+        assert layer_.to_dict() == {
+            "weight": [[1, 2, 3], [4, 5, 6]],
+            "bias": [1, 2],
+            "activation": activation
+        }
     # End init tests
 
     # Forward pass tests

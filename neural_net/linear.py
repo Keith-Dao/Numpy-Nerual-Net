@@ -2,7 +2,7 @@
 This module contains the linear layer.
 """
 from __future__ import annotations
-from typing import Callable, Type
+from typing import Any, Callable, Type
 
 import numpy as np
 from numpy.typing import NDArray
@@ -61,6 +61,24 @@ class Linear:
         """
         self._weight = weight
         self._bias = bias
+
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Get all relevant attributes in a serialisable format.
+
+        Attributes includes:
+            - weight -- weights as a two-dimensional list
+            - bias -- bias as a list
+            - activation -- name of the activation function as a string
+
+        Returns:
+            Attributes listed above as a dictionary.
+        """
+        return {
+            "weight": self._weight.tolist(),
+            "bias": self._bias.tolist(),
+            "activation": self._activation.__class__.__name__
+        }
     # End setup
 
     # Forward pass
