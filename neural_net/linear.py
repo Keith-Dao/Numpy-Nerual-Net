@@ -2,7 +2,7 @@
 This module contains the linear layer.
 """
 from __future__ import annotations
-from typing import Type
+from typing import Callable, Type
 
 import numpy as np
 from numpy.typing import NDArray
@@ -22,17 +22,16 @@ class Linear:
         in_: int,
         out_: int,
         *,
+        weight_init: Callable[..., NDArray] = np.random.normal,
+        bias_init: Callable[..., NDArray] = np.random.normal,
         activation: Type[act.ActivationFunction] = act.NoActivation,
     ) -> None:
         self.name = f"Linear layer {Linear.idCounter}"
         Linear.idCounter += 1
 
         # Forward pass
-        self._weight: NDArray = np.ndarray(
-            (out_, in_),
-            dtype=np.float32
-        )
-        self._bias: NDArray = np.ndarray(out_, dtype=np.float32)
+        self._weight: NDArray = weight_init(size=(out_, in_))
+        self._bias: NDArray = bias_init(size=out_)
         self._activation: act.ActivationFunction = activation()
         self._eval: bool = False
 
