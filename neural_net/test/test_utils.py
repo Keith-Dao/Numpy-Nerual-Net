@@ -8,7 +8,11 @@ from neural_net.utils import softmax, log_softmax
 from neural_net.test import FLOAT_TOLERANCE
 
 
+# pylint: disable=invalid-name, too-few-public-methods
 class TestSoftmax:
+    """
+    Softmax function tester.
+    """
     @pytest.mark.parametrize("x, true_p", [
         (np.array([1, 1, 1]), np.array([0.3333, 0.3333, 0.3333])),
         (np.array([1, 0, 0]), np.array([0.5761, 0.2119, 0.2119])),
@@ -35,6 +39,9 @@ class TestSoftmax:
 
 
 class TestLogSoftmax:
+    """
+    Log softmax function tester.
+    """
     @pytest.mark.parametrize("x, true_p", [
         (np.array([1, 1, 1]), np.array([-1.0986, -1.0986, -1.0986])),
         (np.array([1, 0, 0]), np.array([-0.5514, -1.5514, -1.5514])),

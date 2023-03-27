@@ -12,6 +12,9 @@ from neural_net.test import FLOAT_TOLERANCE
 
 
 class TestCrossEntropyLoss:
+    """
+    Cross entropy loss class tester.
+    """
     # region Fixtures
     @pytest.fixture
     def loss(self, request) -> CrossEntropyLoss:
