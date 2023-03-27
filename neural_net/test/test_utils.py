@@ -28,6 +28,9 @@ class TestSoftmax:
         )
     ])
     def test_softmax(self, x, true_p):
+        """
+        Tests the softmax function.
+        """
         assert np.allclose(softmax(x), true_p, atol=FLOAT_TOLERANCE)
 
 
@@ -51,4 +54,7 @@ class TestLogSoftmax:
         )
     ])
     def test_softmax(self, x, true_p):
+        """
+        Tests the log softmax function.
+        """
         assert np.allclose(log_softmax(x), true_p, atol=FLOAT_TOLERANCE)
