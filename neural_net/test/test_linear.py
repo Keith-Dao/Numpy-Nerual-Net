@@ -18,30 +18,27 @@ class TestLinear:
 
     # region Fixtures
     @pytest.fixture
-    def layer(self) -> Linear:
+    def activation(self) -> None:
         """
-        Create a linear layer with 3 input channels, 2 output channels
-        and no activation function.
+        Default activation to None.
         """
-        layer = Linear(3, 2)
-        layer.load_params(
-            weight=np.arange(1, 7, dtype=float).reshape(2, 3),
-            bias=np.arange(1, 3, dtype=float)
-        )
-        return layer
+        return None
 
     @pytest.fixture
-    def layer_with_relu(self) -> Linear:
+    def layer(self, activation) -> Linear:
         """
-        Create a linear layer with 3 input channels, 2 output channels
-        and a ReLU activation function.
+        Create a linear layer with 3 input channels, 2 output channels.
         """
         layer = Linear(3, 2)
-        layer.load_params(
-            weight=np.arange(1, 7, dtype=float).reshape(2, 3),
-            bias=np.arange(1, 3, dtype=float),
-            activation_function="ReLU"
-        )
+
+        params = {
+            "weight": np.arange(1, 7, dtype=float).reshape(2, 3),
+            "bias": np.arange(1, 3, dtype=float)
+        }
+        if activation:
+            params["activation_function"] = activation
+        layer.load_params(**params)
+
         return layer
 
     @pytest.fixture
@@ -52,6 +49,22 @@ class TestLinear:
         return (
             np.arange(1, 4, dtype=float).reshape(1, 3),
             np.array([[15, 34]], dtype=float)
+        )
+
+    @pytest.fixture
+    def small_grad(self) -> tuple[NDArray, NDArray, NDArray, NDArray]:
+        """
+        Get the gradients for the small input and layers with no activation or
+        ReLU.
+
+        The gradients are with respect to the output, input, weight and bias
+        respectively.
+        """
+        return (
+            np.ones((1, 2)),
+            np.array([[5, 7, 9]]),
+            np.array([[1, 2, 3], [1, 2, 3]]),
+            np.array([1, 1])
         )
 
     @pytest.fixture
@@ -74,23 +87,116 @@ class TestLinear:
         )
 
     @pytest.fixture
-    def large_with_negatives(self) -> tuple[NDArray, NDArray]:
+    def large_grad(self) -> tuple[NDArray, NDArray, NDArray, NDArray]:
+        """
+        Get the gradients for the large input and layers with no activation or
+        ReLU.
+
+        The gradients are with respect to the output, input, weight and bias
+        respectively.
+        """
+        return (
+            np.ones((10, 2)),
+            np.array([
+                [5., 7., 9.],
+                [5., 7., 9.],
+                [5., 7., 9.],
+                [5., 7., 9.],
+                [5., 7., 9.],
+                [5., 7., 9.],
+                [5., 7., 9.],
+                [5., 7., 9.],
+                [5., 7., 9.],
+                [5., 7., 9.]
+            ]),
+            np.array([[145., 155., 165.], [145., 155., 165.]]),
+            np.array([10, 10])
+        )
+
+    @pytest.fixture
+    def large_with_negatives(self, activation) -> tuple[NDArray, NDArray]:
         """
         Create a large input (10, 3) and output (10, 2) pair that contains
         negative numbers.
         """
+        output = np.array([
+            [-51., -131.],
+            [-33.,  -86.],
+            [-15.,  -41.],
+            [3.,    4.],
+            [21.,   49.],
+            [39.,   94.],
+            [57.,  139.],
+            [75.,  184.],
+            [93.,  229.],
+            [111.,  274.]
+        ], dtype=float)
+        if activation == "ReLU":
+            output = np.array([
+                [0., 0.],
+                [0.,  0.],
+                [0.,  0.],
+                [3.,    4.],
+                [21.,   49.],
+                [39.,   94.],
+                [57.,  139.],
+                [75.,  184.],
+                [93.,  229.],
+                [111.,  274.]
+            ], dtype=float)
+
         return (
             np.arange(-10, 20, dtype=float).reshape(10, 3),
-            np.array([[-51., -131.],
-                      [-33.,  -86.],
-                      [-15.,  -41.],
-                      [3.,    4.],
-                      [21.,   49.],
-                      [39.,   94.],
-                      [57.,  139.],
-                      [75.,  184.],
-                      [93.,  229.],
-                      [111.,  274.]], dtype=float)
+            output
+        )
+
+    @pytest.fixture
+    def large_with_negatives_grad(
+        self,
+        activation
+    ) -> tuple[NDArray, NDArray, NDArray, NDArray]:
+        """
+        Get the gradients for the large with negatives input and layers with
+        no activation or ReLU.
+
+        The gradients are with respect to the output, input, weight and bias
+        respectively.
+        """
+        X_grad = np.array([
+            [5., 7., 9.],
+            [5., 7., 9.],
+            [5., 7., 9.],
+            [5., 7., 9.],
+            [5., 7., 9.],
+            [5., 7., 9.],
+            [5., 7., 9.],
+            [5., 7., 9.],
+            [5., 7., 9.],
+            [5., 7., 9.]
+        ])
+        W_grad = np.array([[35., 45., 55.], [35., 45., 55.]])
+        B_grad = np.array([10, 10])
+        if activation == "ReLU":
+            X_grad = np.array([
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [5., 7., 9.],
+                [5., 7., 9.],
+                [5., 7., 9.],
+                [5., 7., 9.],
+                [5., 7., 9.],
+                [5., 7., 9.],
+                [5., 7., 9.]
+            ])
+            W_grad = np.array([[56., 63., 70.], [56., 63., 70.]])
+            B_grad = np.array([7, 7])
+
+        return (
+            np.ones((10, 2)),
+            X_grad,
+            W_grad,
+            B_grad
         )
     # endregion fixtures
 
@@ -171,16 +277,15 @@ class TestLinear:
         assert not layer.eval
         assert layer._input is None
 
-    @pytest.mark.parametrize("layer_, data", [
-        (layer, data)
-        for layer in ("layer", "layer_with_relu")
-        for data in ("small", "large", "large_with_negatives")
-    ])
-    def test_backward_call_with_eval(self, layer_, data, request):
+    @pytest.mark.parametrize("activation", [None, "ReLU"])
+    @pytest.mark.parametrize(
+        "data",
+        ["small", "large", "large_with_negatives"]
+    )
+    def test_backward_call_with_eval(self, layer, data, request):
         """
         Test attempting to call backward with layer set to evaluation mode.
         """
-        layer = request.getfixturevalue(layer_)
         layer.eval = True
         X, Y_true = request.getfixturevalue(data)
         grad = np.ones_like(Y_true)
@@ -315,16 +420,12 @@ class TestLinear:
     # endregion Load tests
 
     # region Save tests
-    @pytest.mark.parametrize("layer_, activation", [
-        ("layer", "NoActivation"),
-        ("layer_with_relu", "ReLU")
-    ])
-    def test_to_dict(self, layer_, activation, request):
+    @pytest.mark.parametrize("activation", ["NoActivation", "ReLU"])
+    def test_to_dict(self, layer, activation):
         """
         Tests the to dict method.
         """
-        layer_ = request.getfixturevalue(layer_)
-        assert layer_.to_dict() == {
+        assert layer.to_dict() == {
             "weight": [[1, 2, 3], [4, 5, 6]],
             "bias": [1, 2],
             "activation": activation
@@ -332,93 +433,49 @@ class TestLinear:
     # endregion Save tests
 
     # region Forward pass tests
+    @pytest.mark.parametrize("activation", [None, "ReLU"])
     @pytest.mark.parametrize("data", [
-        "small", "large", "large_with_negatives"
+        "small", "large",  "large_with_negatives"
     ])
-    def test_forward_1(self, layer, data, request):
+    def test_forward(self, layer, data, request):
         """
         Tests the forward pass for the linear layer.
         """
         X, Y_true = request.getfixturevalue(data)
         Y = layer(X)
         assert np.array_equal(Y, Y_true)
-
-    @pytest.mark.parametrize("data", [
-        "small", "large", "large_with_negatives"
-    ])
-    def test_forward_2(self, layer_with_relu, data, request):
-        """
-        Tests the forward pass for the linear layer with ReLU.
-        """
-        X, Y_true = request.getfixturevalue(data)
-        Y = layer_with_relu(X)
-        Y_true = Y_true * (Y_true > 0)
-        assert np.array_equal(Y, Y_true)
     # endregion forward pass tests
 
     # region Backward pass tests
-    @pytest.mark.parametrize("data", [
-        "small", "large", "large_with_negatives"
+    @pytest.mark.parametrize("activation", [None, "ReLU"])
+    @pytest.mark.parametrize("data, grads", [
+        ("small", "small_grad"),
+        ("large", "large_grad"),
+        ("large_with_negatives", "large_with_negatives_grad")
     ])
-    def test_backward_1(self, layer, data, request):
+    def test_backward(self, layer, data, grads, request):
         """
         Test the backward pass for the linear layer.
         """
-        X, Y_true = request.getfixturevalue(data)
+        X, _ = request.getfixturevalue(data)
         layer(X)
-        grad = np.ones_like(Y_true)
+        grad, true_input_grad, true_weight_grad, true_bias_grad = \
+            request.getfixturevalue(grads)
 
         input_grad, (weight_grad, bias_grad) = layer.backward(grad)
-        assert np.array_equal(
-            input_grad,
-            grad @ layer._weight
-        )
-        assert np.array_equal(
-            weight_grad,
-            grad.T @ X
-        )
-        assert np.array_equal(
-            bias_grad,
-            grad.sum(axis=0)
-        )
+        assert np.array_equal(input_grad, true_input_grad)
+        assert np.array_equal(weight_grad, true_weight_grad)
+        assert np.array_equal(bias_grad, true_bias_grad)
 
-    @pytest.mark.parametrize("data", [
-        "small", "large", "large_with_negatives"
-    ])
-    def test_backward_2(self, layer_with_relu, data, request):
-        """
-        Test the backward pass for the linear layer with ReLU and multiple
-        inputs.
-        """
-        X, Y_true = request.getfixturevalue(data)
-        layer_with_relu(X)
-        grad = np.ones_like(Y_true)
-        true_grad = Y_true > 0
-
-        input_grad, (weight_grad, bias_grad) = layer_with_relu.backward(grad)
-        assert np.array_equal(
-            input_grad,
-            true_grad @ layer_with_relu._weight
-        )
-        assert np.array_equal(
-            weight_grad,
-            true_grad.T @ X
-        )
-        assert np.array_equal(
-            bias_grad,
-            true_grad.sum(axis=0)
-        )
-
-    @pytest.mark.parametrize("layer_, data", [
-        (layer, data)
-        for layer in ("layer", "layer_with_relu")
-        for data in ("small", "large", "large_with_negatives")
-    ])
-    def test_backward_call_before_forward(self, layer_, data, request):
+    @pytest.mark.parametrize("activation", [None, "ReLU"])
+    @pytest.mark.parametrize(
+        "data",
+        ["small", "large", "large_with_negatives"],
+    )
+    def test_backward_call_before_forward(self, layer, data, request):
         """
         Test attempting to call backward before forward.
         """
-        layer = request.getfixturevalue(layer_)
         X, Y_true = request.getfixturevalue(data)
         grad = np.ones_like(Y_true)
         with pytest.raises(RuntimeError):
@@ -426,38 +483,40 @@ class TestLinear:
         layer(X)
         layer.backward(grad)
 
-    @pytest.mark.parametrize("layer_, data", [
-        (layer, data)
-        for layer in ("layer", "layer_with_relu")
-        for data in ("small", "large", "large_with_negatives")
+    @pytest.mark.parametrize("activation", [None, "ReLU"])
+    @pytest.mark.parametrize("data, grads", [
+        ("small", "small_grad"),
+        ("large", "large_grad"),
+        ("large_with_negatives", "large_with_negatives_grad")
     ])
-    def test_update(self, layer_, data, request):
+    def test_update(self, layer, data, grads, request):
         """
         Test parameter update.
         """
-        X, Y_true = request.getfixturevalue(data)
-        layer_ = request.getfixturevalue(layer_)
-        layer_(X)
-        grad = np.ones_like(Y_true)
+        X, _ = request.getfixturevalue(data)
+        layer(X)
+        grad, _, true_weight_grad, true_bias_grad = request.getfixturevalue(
+            grads)
         learning_rate = 1e-4
-        _, (weight_grad, bias_grad) = layer_.backward(grad)
 
+        layer.backward(grad)
         assert np.array_equal(
-            layer_._weight,
+            layer._weight,
             np.arange(1, 7, dtype=float).reshape(2, 3)
         )
         assert np.array_equal(
-            layer_._bias,
+            layer._bias,
             np.arange(1, 3, dtype=float)
         )
-        layer_.update(grad, learning_rate)
+
+        layer.update(grad, learning_rate)
         assert np.array_equal(
-            layer_._weight,
-            np.arange(1, 7, dtype=float).reshape(
-                2, 3) - learning_rate * weight_grad
+            layer._weight,
+            np.arange(1, 7, dtype=float).reshape(2, 3)
+            - learning_rate * true_weight_grad
         )
         assert np.array_equal(
-            layer_._bias,
-            np.arange(1, 3, dtype=float) - learning_rate * bias_grad
+            layer._bias,
+            np.arange(1, 3, dtype=float) - learning_rate * true_bias_grad
         )
     # endregion backward tests
