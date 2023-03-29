@@ -15,7 +15,7 @@ install:
 	$(pip) install -e .
 
 clean:
-	rm -rf .env
+	git clean -dfX
 
 install-test: test_requirements.txt 
 	$(pip) install -r $<
