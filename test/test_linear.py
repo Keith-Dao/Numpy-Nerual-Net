@@ -5,8 +5,8 @@ import numpy as np
 from numpy.typing import NDArray
 import pytest
 
-from neural_net.linear import Linear
-from neural_net.activation_functions import NoActivation, ReLU
+from src.linear import Linear
+from src.activation_functions import NoActivation, ReLU
 
 
 # pylint: disable=protected-access, invalid-name, too-many-public-methods
