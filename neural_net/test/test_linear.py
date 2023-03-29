@@ -18,30 +18,20 @@ class TestLinear:
 
     # region Fixtures
     @pytest.fixture
-    def layer(self) -> Linear:
+    def layer(self, request) -> Linear:
         """
-        Create a linear layer with 3 input channels, 2 output channels
-        and no activation function.
+        Create a linear layer with 3 input channels, 2 output channels.
         """
         layer = Linear(3, 2)
-        layer.load_params(
-            weight=np.arange(1, 7, dtype=float).reshape(2, 3),
-            bias=np.arange(1, 3, dtype=float)
-        )
-        return layer
 
-    @pytest.fixture
-    def layer_with_relu(self) -> Linear:
-        """
-        Create a linear layer with 3 input channels, 2 output channels
-        and a ReLU activation function.
-        """
-        layer = Linear(3, 2)
-        layer.load_params(
-            weight=np.arange(1, 7, dtype=float).reshape(2, 3),
-            bias=np.arange(1, 3, dtype=float),
-            activation_function="ReLU"
-        )
+        params = {
+            "weight": np.arange(1, 7, dtype=float).reshape(2, 3),
+            "bias": np.arange(1, 3, dtype=float)
+        }
+        if hasattr(request, "param"):
+            params["activation_function"] = request.param
+        layer.load_params(**params)
+
         return layer
 
     @pytest.fixture
@@ -171,16 +161,15 @@ class TestLinear:
         assert not layer.eval
         assert layer._input is None
 
-    @pytest.mark.parametrize("layer_, data", [
-        (layer, data)
-        for layer in ("layer", "layer_with_relu")
-        for data in ("small", "large", "large_with_negatives")
-    ])
-    def test_backward_call_with_eval(self, layer_, data, request):
+    @pytest.mark.parametrize("layer", [None, "ReLU"], indirect=["layer"])
+    @pytest.mark.parametrize(
+        "data",
+        ["small", "large", "large_with_negatives"]
+    )
+    def test_backward_call_with_eval(self, layer, data, request):
         """
         Test attempting to call backward with layer set to evaluation mode.
         """
-        layer = request.getfixturevalue(layer_)
         layer.eval = True
         X, Y_true = request.getfixturevalue(data)
         grad = np.ones_like(Y_true)
@@ -315,16 +304,19 @@ class TestLinear:
     # endregion Load tests
 
     # region Save tests
-    @pytest.mark.parametrize("layer_, activation", [
-        ("layer", "NoActivation"),
-        ("layer_with_relu", "ReLU")
-    ])
-    def test_to_dict(self, layer_, activation, request):
+    @pytest.mark.parametrize(
+        "layer, activation",
+        [
+            (None, "NoActivation"),
+            ("ReLU", "ReLU")
+        ],
+        indirect=["layer"]
+    )
+    def test_to_dict(self, layer, activation, request):
         """
         Tests the to dict method.
         """
-        layer_ = request.getfixturevalue(layer_)
-        assert layer_.to_dict() == {
+        assert layer.to_dict() == {
             "weight": [[1, 2, 3], [4, 5, 6]],
             "bias": [1, 2],
             "activation": activation
@@ -343,15 +335,16 @@ class TestLinear:
         Y = layer(X)
         assert np.array_equal(Y, Y_true)
 
+    @pytest.mark.parametrize("layer", ["ReLU"], indirect=["layer"])
     @pytest.mark.parametrize("data", [
         "small", "large", "large_with_negatives"
     ])
-    def test_forward_2(self, layer_with_relu, data, request):
+    def test_forward_2(self, layer, data, request):
         """
         Tests the forward pass for the linear layer with ReLU.
         """
         X, Y_true = request.getfixturevalue(data)
-        Y = layer_with_relu(X)
+        Y = layer(X)
         Y_true = Y_true * (Y_true > 0)
         assert np.array_equal(Y, Y_true)
     # endregion forward pass tests
@@ -382,23 +375,24 @@ class TestLinear:
             grad.sum(axis=0)
         )
 
+    @pytest.mark.parametrize("layer", ["ReLU"], indirect=["layer"])
     @pytest.mark.parametrize("data", [
         "small", "large", "large_with_negatives"
     ])
-    def test_backward_2(self, layer_with_relu, data, request):
+    def test_backward_2(self, layer, data, request):
         """
         Test the backward pass for the linear layer with ReLU and multiple
         inputs.
         """
         X, Y_true = request.getfixturevalue(data)
-        layer_with_relu(X)
+        layer(X)
         grad = np.ones_like(Y_true)
         true_grad = Y_true > 0
 
-        input_grad, (weight_grad, bias_grad) = layer_with_relu.backward(grad)
+        input_grad, (weight_grad, bias_grad) = layer.backward(grad)
         assert np.array_equal(
             input_grad,
-            true_grad @ layer_with_relu._weight
+            true_grad @ layer._weight
         )
         assert np.array_equal(
             weight_grad,
@@ -409,16 +403,15 @@ class TestLinear:
             true_grad.sum(axis=0)
         )
 
-    @pytest.mark.parametrize("layer_, data", [
-        (layer, data)
-        for layer in ("layer", "layer_with_relu")
-        for data in ("small", "large", "large_with_negatives")
-    ])
-    def test_backward_call_before_forward(self, layer_, data, request):
+    @pytest.mark.parametrize("layer", [None, "ReLU"], indirect=["layer"])
+    @pytest.mark.parametrize(
+        "data",
+        ["small", "large", "large_with_negatives"],
+    )
+    def test_backward_call_before_forward(self, layer, data, request):
         """
         Test attempting to call backward before forward.
         """
-        layer = request.getfixturevalue(layer_)
         X, Y_true = request.getfixturevalue(data)
         grad = np.ones_like(Y_true)
         with pytest.raises(RuntimeError):
@@ -426,38 +419,37 @@ class TestLinear:
         layer(X)
         layer.backward(grad)
 
-    @pytest.mark.parametrize("layer_, data", [
-        (layer, data)
-        for layer in ("layer", "layer_with_relu")
-        for data in ("small", "large", "large_with_negatives")
-    ])
-    def test_update(self, layer_, data, request):
+    @pytest.mark.parametrize("layer", [None, "ReLU"], indirect=["layer"])
+    @pytest.mark.parametrize(
+        "data",
+        ["small", "large", "large_with_negatives"]
+    )
+    def test_update(self, layer, data, request):
         """
         Test parameter update.
         """
         X, Y_true = request.getfixturevalue(data)
-        layer_ = request.getfixturevalue(layer_)
-        layer_(X)
+        layer(X)
         grad = np.ones_like(Y_true)
         learning_rate = 1e-4
-        _, (weight_grad, bias_grad) = layer_.backward(grad)
+        _, (weight_grad, bias_grad) = layer.backward(grad)
 
         assert np.array_equal(
-            layer_._weight,
+            layer._weight,
             np.arange(1, 7, dtype=float).reshape(2, 3)
         )
         assert np.array_equal(
-            layer_._bias,
+            layer._bias,
             np.arange(1, 3, dtype=float)
         )
-        layer_.update(grad, learning_rate)
+        layer.update(grad, learning_rate)
         assert np.array_equal(
-            layer_._weight,
+            layer._weight,
             np.arange(1, 7, dtype=float).reshape(
                 2, 3) - learning_rate * weight_grad
         )
         assert np.array_equal(
-            layer_._bias,
+            layer._bias,
             np.arange(1, 3, dtype=float) - learning_rate * bias_grad
         )
     # endregion backward tests
