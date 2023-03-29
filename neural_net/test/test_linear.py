@@ -89,7 +89,7 @@ class TestLinear:
     @pytest.fixture
     def large_grad(self) -> tuple[NDArray, NDArray, NDArray, NDArray]:
         """
-        Get the gradients for the small input and layers with no activation or
+        Get the gradients for the large input and layers with no activation or
         ReLU.
 
         The gradients are with respect to the output, input, weight and bias
@@ -114,23 +114,89 @@ class TestLinear:
         )
 
     @pytest.fixture
-    def large_with_negatives(self) -> tuple[NDArray, NDArray]:
+    def large_with_negatives(self, activation) -> tuple[NDArray, NDArray]:
         """
         Create a large input (10, 3) and output (10, 2) pair that contains
         negative numbers.
         """
+        output = np.array([
+            [-51., -131.],
+            [-33.,  -86.],
+            [-15.,  -41.],
+            [3.,    4.],
+            [21.,   49.],
+            [39.,   94.],
+            [57.,  139.],
+            [75.,  184.],
+            [93.,  229.],
+            [111.,  274.]
+        ], dtype=float)
+        if activation == "ReLU":
+            output = np.array([
+                [0., 0.],
+                [0.,  0.],
+                [0.,  0.],
+                [3.,    4.],
+                [21.,   49.],
+                [39.,   94.],
+                [57.,  139.],
+                [75.,  184.],
+                [93.,  229.],
+                [111.,  274.]
+            ], dtype=float)
+
         return (
             np.arange(-10, 20, dtype=float).reshape(10, 3),
-            np.array([[-51., -131.],
-                      [-33.,  -86.],
-                      [-15.,  -41.],
-                      [3.,    4.],
-                      [21.,   49.],
-                      [39.,   94.],
-                      [57.,  139.],
-                      [75.,  184.],
-                      [93.,  229.],
-                      [111.,  274.]], dtype=float)
+            output
+        )
+
+    @pytest.fixture
+    def large_with_negatives_grad(
+        self,
+        activation
+    ) -> tuple[NDArray, NDArray, NDArray, NDArray]:
+        """
+        Get the gradients for the large with negatives input and layers with
+        no activation or ReLU.
+
+        The gradients are with respect to the output, input, weight and bias
+        respectively.
+        """
+        X_grad = np.array([
+            [5., 7., 9.],
+            [5., 7., 9.],
+            [5., 7., 9.],
+            [5., 7., 9.],
+            [5., 7., 9.],
+            [5., 7., 9.],
+            [5., 7., 9.],
+            [5., 7., 9.],
+            [5., 7., 9.],
+            [5., 7., 9.]
+        ])
+        W_grad = np.array([[35., 45., 55.], [35., 45., 55.]])
+        B_grad = np.array([10, 10])
+        if activation == "ReLU":
+            X_grad = np.array([
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [5., 7., 9.],
+                [5., 7., 9.],
+                [5., 7., 9.],
+                [5., 7., 9.],
+                [5., 7., 9.],
+                [5., 7., 9.],
+                [5., 7., 9.]
+            ])
+            W_grad = np.array([[56., 63., 70.], [56., 63., 70.]])
+            B_grad = np.array([7, 7])
+
+        return (
+            np.ones((10, 2)),
+            X_grad,
+            W_grad,
+            B_grad
         )
     # endregion fixtures
 
@@ -369,7 +435,7 @@ class TestLinear:
     # region Forward pass tests
     @pytest.mark.parametrize("activation", [None, "ReLU"])
     @pytest.mark.parametrize("data", [
-        "small", "large",  # "large_with_negatives"
+        "small", "large",  "large_with_negatives"
     ])
     def test_forward(self, layer, data, request):
         """
@@ -385,7 +451,7 @@ class TestLinear:
     @pytest.mark.parametrize("data, grads", [
         ("small", "small_grad"),
         ("large", "large_grad"),
-        # ("large_with_negatives", "")
+        ("large_with_negatives", "large_with_negatives_grad")
     ])
     def test_backward(self, layer, data, grads, request):
         """
@@ -421,7 +487,7 @@ class TestLinear:
     @pytest.mark.parametrize("data, grads", [
         ("small", "small_grad"),
         ("large", "large_grad"),
-        # ("large_with_negatives", "")
+        ("large_with_negatives", "large_with_negatives_grad")
     ])
     def test_update(self, layer, data, grads, request):
         """
