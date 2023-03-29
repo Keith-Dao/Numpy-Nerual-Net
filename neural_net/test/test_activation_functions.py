@@ -37,8 +37,20 @@ class TestActivationFunctions:
         Creates a ReLU function and the input and output values.
         """
         X = np.arange(-10, 10, dtype=float).reshape(5, 4)
-        Y = X * (X > 0)
-        grad = X > 0
+        Y = np.array([
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 1],
+            [2, 3, 4, 5],
+            [6, 7, 8, 9]
+        ])
+        grad = np.array([
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 1],
+            [1, 1, 1, 1],
+            [1, 1, 1, 1]
+        ])
 
         return (
             ReLU(),
