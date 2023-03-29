@@ -1,22 +1,26 @@
-.PHONY: install update clean test
+python := python
+pip := pip
+
+.PHONY: install clean install-test test
 .DEFAULT_GOAL := default
 default:
 	@ echo "Please provide a command."
 
-install-env:
-	python -m venv .env
+.env:
+	$(python) -m venv .env
 
 install: 
-	pip install --upgrade pip
-	pip install -r requirements.txt
+	$(pip) install --upgrade pip
+	$(pip) install -r requirements.txt
+	$(pip) install -e .
 
 clean:
-	rm -rf .env
+	git clean -dfX
 
 install-test: test_requirements.txt 
-	pip install -r $<
+	$(pip) install -r $<
 
 test: install-test
-	pytest -v --cov=neural_net --cov-report term-missing
-	flake8 neural_net/
-	pylint $$(git ls-files 'neural_net/*.py' | grep -v "test")
+	pytest -v --cov=src --cov-report term-missing
+	flake8 src/
+	pylint $$(git ls-files 'src/*.py' | grep -v "test")

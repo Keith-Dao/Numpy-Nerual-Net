@@ -7,8 +7,8 @@ import numpy as np
 from numpy._typing import NDArray
 import pytest
 
-from neural_net.cross_entropy_loss import CrossEntropyLoss
-from neural_net.test import FLOAT_TOLERANCE
+from src.cross_entropy_loss import CrossEntropyLoss
+from . import FLOAT_TOLERANCE
 
 
 class TestCrossEntropyLoss:

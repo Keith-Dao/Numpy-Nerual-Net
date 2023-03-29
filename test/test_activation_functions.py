@@ -5,7 +5,7 @@ import numpy as np
 from numpy.typing import NDArray
 import pytest
 
-from neural_net.activation_functions import NoActivation, ReLU
+from src.activation_functions import NoActivation, ReLU
 
 
 # pylint: disable=protected-access, invalid-name

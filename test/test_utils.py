@@ -4,8 +4,8 @@ This module tests the utils module.
 import numpy as np
 import pytest
 
-from neural_net.utils import softmax, log_softmax
-from neural_net.test import FLOAT_TOLERANCE
+from src.utils import softmax, log_softmax
+from . import FLOAT_TOLERANCE
 
 
 # pylint: disable=invalid-name, too-few-public-methods
