@@ -6,7 +6,7 @@ from typing import Callable
 import numpy as np
 from numpy.typing import NDArray
 
-from . import utils
+from src import utils
 
 
 class CrossEntropyLoss:

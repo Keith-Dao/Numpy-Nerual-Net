@@ -7,7 +7,7 @@ from typing import Any, Callable, Type
 import numpy as np
 from numpy.typing import NDArray
 
-from . import activation_functions as act
+from src import activation_functions as act
 
 
 class Linear:
