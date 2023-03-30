@@ -1,6 +1,8 @@
 """
 This module tests the utils module.
 """
+from collections import Counter
+
 import numpy as np
 import pytest
 
@@ -85,3 +87,4 @@ class TestShuffle:
         assert not inplace == equal(data, data_copy), \
             f"Shuffle should be {'' if inplace else 'not '}done inplace"
         assert not equal(data_copy, shuffled)
+        assert Counter(data_copy) == Counter(shuffled)
