@@ -4,7 +4,7 @@ This module tests the utils module.
 import numpy as np
 import pytest
 
-from src.utils import softmax, log_softmax
+from src.utils import softmax, log_softmax, shuffle
 from . import FLOAT_TOLERANCE
 
 
@@ -65,3 +65,23 @@ class TestLogSoftmax:
         Tests the log softmax function.
         """
         assert np.allclose(log_softmax(x), true_p, atol=FLOAT_TOLERANCE)
+
+
+class TestShuffle:
+    """
+    Shuffle function tester.
+    """
+    @pytest.mark.parametrize("data, equal", [
+        (list(range(10)), lambda a, b: a == b),
+        (np.arange(10), lambda a, b: np.array_equal(a, b))
+    ])
+    @pytest.mark.parametrize("inplace", [True, False])
+    def test_shuffle(self, data, equal, inplace):
+        """
+        Test the shuffle function.
+        """
+        data_copy = data.copy()
+        shuffled = shuffle(data, inplace=inplace)
+        assert not inplace == equal(data, data_copy), \
+            f"Shuffle should be {'' if inplace else 'not '}done inplace"
+        assert not equal(data_copy, shuffled)
