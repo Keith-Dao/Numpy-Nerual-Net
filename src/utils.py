@@ -47,6 +47,6 @@ def shuffle(data: list | NDArray, inplace: bool = False) -> list | NDArray:
         data = data.copy()
 
     for i in range(len(data) - 1, 0, -1):
-        j = random.randint(0, i)
+        j = random.randint(0, i - 1)
         data[i], data[j] = data[j], data[i]
     return data
