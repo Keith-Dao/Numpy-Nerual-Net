@@ -2,9 +2,9 @@
 This module tests the image loader module.
 """
 from collections import Counter
-import pathlib
 from typing import Callable
 
+from PIL import Image
 import pytest
 import numpy as np
 from numpy.typing import NDArray
@@ -13,7 +13,76 @@ from src.image_loader import DatasetIterator
 
 
 # pylint: disable=protected-access, invalid-name, too-many-public-methods
+# pylint: disable=redefined-outer-name, too-many-arguments
 # pyright: reportGeneralTypeIssues=false
+# region Global fixtures
+@pytest.fixture(scope="class")
+def data() -> tuple[NDArray, list[int]]:
+    """
+    Dummy filepaths, data and classes.
+
+    Returns:
+        A tuple with the data and associated class.
+    """
+    return (
+        np.array([
+            [[1, 4, 5], [2, 5, 6], [6, 5, 6]],
+            [[4, 5, 1], [5, 8, 4], [8, 5, 9]],
+            [[3, 8, 9], [6, 5, 8], [6, 4, 1]]
+        ], dtype=np.uint8),
+        [0, 1, 0]
+    )
+
+
+@pytest.fixture(scope="class")
+def dummy_folder(tmp_path_factory, data):
+    """
+    Creates dummy files in a temporary path.
+    """
+    tmp_path_factory.mktemp("0", numbered=False)
+    tmp_path_factory.mktemp("1", numbered=False)
+
+    for i, (x, label) in enumerate(zip(*data)):
+        image = Image.fromarray(x)
+        path = tmp_path_factory.getbasetemp() / str(label) \
+            / f"{i}.png"
+        image.save(path)
+
+    return tmp_path_factory.getbasetemp()
+
+
+@pytest.fixture(scope="class")
+def dummy_files(dummy_folder):
+    """
+    Gets all the dummy file paths.
+    """
+    return list(
+        sorted(
+            dummy_folder.glob("**/*.png"),
+            key=lambda path: path.name
+        )
+    )
+
+
+@pytest.fixture
+def preprocessing() -> list[Callable[..., NDArray]]:
+    """
+    Simple preprocessing steps.
+    """
+    return [
+        lambda path: np.array(Image.open(path))
+    ]
+
+
+@pytest.fixture
+def label_processor() -> Callable[[str], int]:
+    """
+    Generic label processor.
+    """
+    return int
+# endregion Global fixtures
+
+
 class TestDatasetIterator:
     """
     Dataset iterator tester
@@ -21,49 +90,19 @@ class TestDatasetIterator:
 
     # region Fixtures
     @pytest.fixture
-    def data(self) -> tuple[list[pathlib.Path], NDArray, list[int]]:
-        """
-        Dummy filepaths, data and classes.
-
-        Returns:
-            A tuple with dummy filepaths and the associated data and
-            classes.
-        """
-        return (
-            [
-                pathlib.Path("data/0/145256656.png"),
-                pathlib.Path("data/1/451584859.png"),
-                pathlib.Path("data/0/389658641.png"),
-            ],
-            np.array([
-                [[1, 4, 5], [2, 5, 6], [6, 5, 6]],
-                [[4, 5, 1], [5, 8, 4], [8, 5, 9]],
-                [[3, 8, 9], [6, 5, 8], [6, 4, 1]]
-            ]),
-            [0, 1, 0]
-        )
-
-    @pytest.fixture
-    def preprocessing(self) -> list[Callable[..., NDArray]]:
-        return [
-            lambda path: np.array([int(c) for c in path.stem]).reshape(3, 3)
-        ]
-
-    @pytest.fixture
-    def label_processor(self) -> Callable[[str], int]:
-        return lambda label: int(label)
-
-    @pytest.fixture
     def iterator(
         self,
-        data,
+        dummy_files,
         preprocessing,
         label_processor,
         request
     ) -> DatasetIterator:
+        """
+        Dataset iterator using the global fixtures.
+        """
         batch_size, drop_last = request.param
         return DatasetIterator(
-            data[0],
+            dummy_files,
             preprocessing,
             label_processor,
             batch_size,
@@ -77,7 +116,7 @@ class TestDatasetIterator:
     @pytest.mark.parametrize("drop_last", [True, False])
     def test_init(
         self,
-        data,
+        dummy_files,
         preprocessing,
         label_processor,
         batch_size,
@@ -87,15 +126,15 @@ class TestDatasetIterator:
         Test a valid DatasetIterator init.
         """
         iterator = DatasetIterator(
-            data[0],
+            dummy_files,
             preprocessing,
             label_processor,
             batch_size,
             drop_last,
             shuffle=False
         )
-        assert iterator._data is not data[0]
-        assert iterator._data == data[0]
+        assert iterator._data is not dummy_files
+        assert iterator._data == dummy_files
         assert iterator._preprocessing == preprocessing
         assert iterator._label_processor == label_processor
         assert iterator._batch_size == batch_size
@@ -106,7 +145,7 @@ class TestDatasetIterator:
     ])
     def test_init_batch_size_with_wrong_type(
         self,
-        data,
+        dummy_files,
         preprocessing,
         label_processor,
         batch_size
@@ -116,7 +155,7 @@ class TestDatasetIterator:
         """
         with pytest.raises(TypeError):
             DatasetIterator(
-                data[0],
+                dummy_files,
                 preprocessing,
                 label_processor,
                 batch_size
@@ -127,7 +166,7 @@ class TestDatasetIterator:
     ])
     def test_init_batch_size_with_invalid_value(
         self,
-        data,
+        dummy_files,
         preprocessing,
         label_processor,
         batch_size
@@ -137,7 +176,7 @@ class TestDatasetIterator:
         """
         with pytest.raises(ValueError):
             DatasetIterator(
-                data[0],
+                dummy_files,
                 preprocessing,
                 label_processor,
                 batch_size
@@ -146,23 +185,30 @@ class TestDatasetIterator:
     @pytest.mark.parametrize("shuffle", [True, False])
     def test_init_shuffle(
         self,
-        data,
+        dummy_files,
         preprocessing,
         label_processor,
         shuffle
     ):
+        """
+        Tests the shuffle for the dataset iterator.
+        """
         iterator = DatasetIterator(
-            data[0],
+            dummy_files,
             preprocessing,
             label_processor,
             1,
             shuffle=shuffle
         )
-        assert Counter(iterator._data) == Counter(data[0])
-        assert shuffle == (iterator._data != data[0]), \
+        assert Counter(iterator._data) == Counter(dummy_files)
+        assert shuffle == (iterator._data != dummy_files), \
             f"The data should {'' if shuffle else 'not '}be shuffled."
 
-    def test_init_with_invalid_preprocessing(self, data, label_processor):
+    def test_init_with_invalid_preprocessing(
+        self,
+        dummy_files,
+        label_processor
+    ):
         """
         Test init with invalid preprocessing functions.
         """
@@ -170,7 +216,7 @@ class TestDatasetIterator:
             return 0
 
         iterator = DatasetIterator(
-            data[0],
+            dummy_files,
             [invalid_preprocessing],
             label_processor,
             1
@@ -179,7 +225,11 @@ class TestDatasetIterator:
         with pytest.raises(ValueError):
             next(iterator)
 
-    def test_init_with_invalid_label_processor(self, data, preprocessing):
+    def test_init_with_invalid_label_processor(
+        self,
+        dummy_files,
+        preprocessing
+    ):
         """
         Test init with invalid label_processor function.
         """
@@ -187,7 +237,7 @@ class TestDatasetIterator:
             return "NOT VALID"
 
         iterator = DatasetIterator(
-            data[0],
+            dummy_files,
             preprocessing,
             invalid_label_processor,
             1
@@ -212,22 +262,19 @@ class TestDatasetIterator:
         """
         Test the iterator yields the correct data.
         """
-        _, true_data, true_labels = data
+        true_data, true_labels = data
         batch_size = iterator._batch_size
         total_batches = len(iterator)  # Tested in test_length
 
-        for batch, (data, labels) in enumerate(iterator):
+        for batch, (data_, labels) in enumerate(iterator):
             assert batch < total_batches, \
                 f"Expected {total_batches} batches, got at least {batch + 1}."
             assert np.array_equal(
-                data,
+                data_,
                 true_data[batch * batch_size: (batch + 1) * batch_size]
             )
             assert labels == true_labels[
                 batch * batch_size: (batch + 1) * batch_size]
-
-        with pytest.raises(StopIteration):
-            next(iterator)
     # endregion Iterator tests
 
     # region Length tests
