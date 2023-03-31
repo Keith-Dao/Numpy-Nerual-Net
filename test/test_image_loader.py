@@ -2,6 +2,7 @@
 This module tests the image loader module.
 """
 from collections import Counter
+import shutil
 from typing import Callable
 
 from PIL import Image
@@ -15,6 +16,8 @@ from src.image_loader import DatasetIterator
 # pylint: disable=protected-access, invalid-name, too-many-public-methods
 # pylint: disable=redefined-outer-name, too-many-arguments
 # pyright: reportGeneralTypeIssues=false
+
+
 # region Global fixtures
 @pytest.fixture(scope="class")
 def data() -> tuple[NDArray, list[int]]:
@@ -39,8 +42,10 @@ def dummy_folder(tmp_path_factory, data):
     """
     Creates dummy files in a temporary path.
     """
-    tmp_path_factory.mktemp("0", numbered=False)
-    tmp_path_factory.mktemp("1", numbered=False)
+    dirs = [
+        tmp_path_factory.mktemp("0", numbered=False),
+        tmp_path_factory.mktemp("1", numbered=False)
+    ]
 
     for i, (x, label) in enumerate(zip(*data)):
         image = Image.fromarray(x)
@@ -48,7 +53,9 @@ def dummy_folder(tmp_path_factory, data):
             / f"{i}.png"
         image.save(path)
 
-    return tmp_path_factory.getbasetemp()
+    yield tmp_path_factory.getbasetemp()
+    for dir_ in dirs:
+        shutil.rmtree(str(dir_))
 
 
 @pytest.fixture(scope="class")
