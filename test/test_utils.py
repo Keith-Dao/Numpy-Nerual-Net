@@ -75,7 +75,7 @@ class TestShuffle:
     """
     @pytest.mark.parametrize("data, equal", [
         (list(range(10)), lambda a, b: a == b),
-        (np.arange(10), lambda a, b: np.array_equal(a, b))
+        (np.arange(10), np.array_equal)
     ])
     @pytest.mark.parametrize("inplace", [True, False])
     def test_shuffle(self, data, equal, inplace):
