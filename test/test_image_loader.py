@@ -18,79 +18,77 @@ from src.image_loader import DatasetIterator
 # pyright: reportGeneralTypeIssues=false
 
 
-# region Global fixtures
-@pytest.fixture(scope="class")
-def data() -> tuple[NDArray, list[int]]:
+class TestFixtures:
     """
-    Dummy filepaths, data and classes.
-
-    Returns:
-        A tuple with the data and associated class.
+    Fixtures to be used for tests.
     """
-    return (
-        np.array([
-            [[1, 4, 5], [2, 5, 6], [6, 5, 6]],
-            [[4, 5, 1], [5, 8, 4], [8, 5, 9]],
-            [[3, 8, 9], [6, 5, 8], [6, 4, 1]]
-        ], dtype=np.uint8),
-        [0, 1, 0]
-    )
+    @pytest.fixture(scope="class")
+    def data(self) -> tuple[NDArray, list[int]]:
+        """
+        Dummy filepaths, data and classes.
 
-
-@pytest.fixture(scope="class")
-def dummy_folder(tmp_path_factory, data):
-    """
-    Creates dummy files in a temporary path.
-    """
-    dirs = [
-        tmp_path_factory.mktemp("0", numbered=False),
-        tmp_path_factory.mktemp("1", numbered=False)
-    ]
-
-    for i, (x, label) in enumerate(zip(*data)):
-        image = Image.fromarray(x)
-        path = tmp_path_factory.getbasetemp() / str(label) \
-            / f"{i}.png"
-        image.save(path)
-
-    yield tmp_path_factory.getbasetemp()
-    for dir_ in dirs:
-        shutil.rmtree(str(dir_))
-
-
-@pytest.fixture(scope="class")
-def dummy_files(dummy_folder):
-    """
-    Gets all the dummy file paths.
-    """
-    return list(
-        sorted(
-            dummy_folder.glob("**/*.png"),
-            key=lambda path: path.name
+        Returns:
+            A tuple with the data and associated class.
+        """
+        return (
+            np.array([
+                [[1, 4, 5], [2, 5, 6], [6, 5, 6]],
+                [[4, 5, 1], [5, 8, 4], [8, 5, 9]],
+                [[3, 8, 9], [6, 5, 8], [6, 4, 1]]
+            ], dtype=np.uint8),
+            [0, 1, 0]
         )
-    )
+
+    @pytest.fixture(scope="class")
+    def dummy_folder(self, tmp_path_factory, data):
+        """
+        Creates dummy files in a temporary path.
+        """
+        dirs = [
+            tmp_path_factory.mktemp("0", numbered=False),
+            tmp_path_factory.mktemp("1", numbered=False)
+        ]
+
+        for i, (x, label) in enumerate(zip(*data)):
+            image = Image.fromarray(x)
+            path = tmp_path_factory.getbasetemp() / str(label) \
+                / f"{i}.png"
+            image.save(path)
+
+        yield tmp_path_factory.getbasetemp()
+        for dir_ in dirs:
+            shutil.rmtree(str(dir_))
+
+    @pytest.fixture(scope="class")
+    def dummy_files(self, dummy_folder):
+        """
+        Gets all the dummy file paths.
+        """
+        return list(
+            sorted(
+                dummy_folder.glob("**/*.png"),
+                key=lambda path: path.name
+            )
+        )
+
+    @pytest.fixture
+    def preprocessing(self) -> list[Callable[..., NDArray]]:
+        """
+        Simple preprocessing steps.
+        """
+        return [
+            lambda path: np.array(Image.open(path))
+        ]
+
+    @pytest.fixture
+    def label_processor(self) -> Callable[[str], int]:
+        """
+        Generic label processor.
+        """
+        return int
 
 
-@pytest.fixture
-def preprocessing() -> list[Callable[..., NDArray]]:
-    """
-    Simple preprocessing steps.
-    """
-    return [
-        lambda path: np.array(Image.open(path))
-    ]
-
-
-@pytest.fixture
-def label_processor() -> Callable[[str], int]:
-    """
-    Generic label processor.
-    """
-    return int
-# endregion Global fixtures
-
-
-class TestDatasetIterator:
+class TestDatasetIterator(TestFixtures):
     """
     Dataset iterator tester
     """
