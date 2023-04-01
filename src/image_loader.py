@@ -21,10 +21,21 @@ class DatasetIterator:
         preprocessing: list[Callable[..., NDArray]],
         label_processor: Callable[[str], int],
         batch_size: int,
-        drop_last: bool = False,
-        *,
-        shuffle: bool = True
+        **kwargs
     ) -> None:
+        """
+        Dataset iterator init.
+
+        Args:
+            data: The data to iterate through
+            preprocessing: The preprocessing steps for the data
+            label_processor: The processor for the label into an int
+            batch_size: The batch size of the iterator
+        Keyword args:
+            drop_last: Whether or not to drop the last batch if it does not
+                match the batch size
+            shuffle: Whether or not to shuffle the data
+        """
         if not isinstance(batch_size, int):
             raise TypeError(
                 f"batch_size must be an int, got {type(batch_size).__name__}."
@@ -36,16 +47,13 @@ class DatasetIterator:
             )
 
         self._data = data.copy()
-        if shuffle:
+        if kwargs.get("shuffle", True):
             self._data = utils.shuffle(self._data, inplace=True)
         self._label_processor = label_processor
         self._preprocessing = preprocessing
         self._batch_size = batch_size
         self._i = 0
-        self._len = (
-            len(self._data) + (self._batch_size - 1 if not drop_last else 0)
-        ) // self._batch_size
-        self._drop_last = drop_last
+        self._drop_last = kwargs.get("drop_last", False)
 
     # region Built-ins
     def __iter__(self):
@@ -86,5 +94,9 @@ class DatasetIterator:
         return data, labels  # pyright: ignore [reportGeneralTypeIssues]
 
     def __len__(self) -> int:
-        return self._len
+        return (
+            len(self._data) + (
+                self._batch_size - 1 if not self._drop_last else 0
+            )
+        ) // self._batch_size
     # endregion Built-ins

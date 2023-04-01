@@ -111,7 +111,7 @@ class TestDatasetIterator(TestFixtures):
             preprocessing,
             label_processor,
             batch_size,
-            drop_last,
+            drop_last=drop_last,
             shuffle=False
         )
     # endregion Fixtures
@@ -135,7 +135,7 @@ class TestDatasetIterator(TestFixtures):
             preprocessing,
             label_processor,
             batch_size,
-            drop_last,
+            drop_last=drop_last,
             shuffle=False
         )
         assert iterator._data is not dummy_files
@@ -299,3 +299,10 @@ class TestDatasetIterator(TestFixtures):
         """
         assert len(iterator) == length
     # endregion Length tests
+
+
+class TestImageLoader(TestFixtures):
+    """
+    Image loader tester.
+    """
+    pass
