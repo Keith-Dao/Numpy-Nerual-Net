@@ -10,14 +10,12 @@ import pytest
 import numpy as np
 from numpy.typing import NDArray
 
-from src.image_loader import DatasetIterator
+from src.image_loader import DatasetIterator, ImageLoader
 
 
 # pylint: disable=protected-access, invalid-name, too-many-public-methods
 # pylint: disable=redefined-outer-name, too-many-arguments
 # pyright: reportGeneralTypeIssues=false
-
-
 class TestFixtures:
     """
     Fixtures to be used for tests.
@@ -36,7 +34,7 @@ class TestFixtures:
                 [[4, 5, 1], [5, 8, 4], [8, 5, 9]],
                 [[3, 8, 9], [6, 5, 8], [6, 4, 1]]
             ], dtype=np.uint8),
-            [0, 1, 0]
+            [0, 0, 1]
         )
 
     @pytest.fixture(scope="class")
@@ -305,4 +303,226 @@ class TestImageLoader(TestFixtures):
     """
     Image loader tester.
     """
-    pass
+    # region Fixtures
+    @pytest.fixture
+    def loader(
+        self,
+        dummy_folder,
+        preprocessing,
+        label_processor,
+        request
+    ):
+        """
+        Image loader.
+        """
+        train_test_split = request.param
+        return ImageLoader(
+            str(dummy_folder),
+            preprocessing,
+            label_processor,
+            train_test_split,
+            file_formats=[".png"],
+            shuffle=False
+        )
+    # endregion Fixtures
+
+    # region Init tests
+    def test_init(
+        self,
+        dummy_folder,
+        preprocessing,
+        label_processor
+    ):
+        """
+        Test a valid image loader init.
+        """
+        image_loader = ImageLoader(
+            str(dummy_folder),
+            preprocessing,
+            label_processor,
+            .7,
+            file_formats=[".png"],
+            shuffle=False
+        )
+
+        # Fixture order is different
+        dummy_files = list(dummy_folder.glob("**/*.png"))
+
+        assert image_loader._train == dummy_files[:2]
+        assert image_loader._test == dummy_files[2:]
+        assert image_loader._preprocessing == preprocessing
+        assert image_loader._label_processor == label_processor
+
+    @pytest.mark.parametrize("split", [
+        1.1,
+        -0.2,
+        100
+    ])
+    def test_init_split_value_error(
+        self,
+        dummy_folder,
+        preprocessing,
+        label_processor,
+        split
+    ):
+        """
+        Tests the image loader init when an invalid value for
+        train_test_split is provided.
+        """
+        with pytest.raises(ValueError):
+            ImageLoader(
+                str(dummy_folder),
+                preprocessing,
+                label_processor,
+                split,
+                file_formats=[".png"]
+            )
+
+    @pytest.mark.parametrize("split", [
+        "test",
+        []
+    ])
+    def test_init_split_type_error(
+        self,
+        dummy_folder,
+        preprocessing,
+        label_processor,
+        split
+    ):
+        """
+        Tests the image loader init when an invalid type for
+        train_test_split is provided.
+        """
+        with pytest.raises(TypeError):
+            ImageLoader(
+                str(dummy_folder),
+                preprocessing,
+                label_processor,
+                split,
+                file_formats=[".png"]
+            )
+
+    def test_init_shuffle(
+        self,
+        dummy_folder,
+        preprocessing,
+        label_processor
+    ):
+        """
+        Test image loader init with shuffle.
+        """
+        image_loader = ImageLoader(
+            str(dummy_folder),
+            preprocessing,
+            label_processor,
+            1,
+            file_formats=[".png"],
+            shuffle=True
+        )
+
+        # Fixture order is different
+        dummy_files = list(dummy_folder.glob("**/*.png"))
+        assert image_loader._train != dummy_files
+        assert Counter(image_loader._train) == Counter(dummy_files)
+
+    def test_init_bad_path(
+        self,
+        preprocessing,
+        label_processor
+    ):
+        """
+        Test image loader init with a bad path.
+        """
+        with pytest.raises(ValueError):
+            ImageLoader(
+                "testing",
+                preprocessing,
+                label_processor,
+                1,
+                file_formats=[".png"],
+                shuffle=True
+            )
+
+    @pytest.mark.parametrize("loader, train_size", [
+        (0, 0),
+        (0.3, 0),
+        (1/3, 1),
+        (0.4, 1),
+        (0.6, 1),
+        (2/3, 2),
+        (0.7, 2),
+        (0.9, 2),
+        (1, 3)
+    ], indirect=["loader"])
+    def test_init_dataset_split(
+        self,
+        loader,
+        train_size
+    ):
+        """
+        Test the dataset is correctly splitting the data.
+        """
+        assert len(loader._train) == train_size
+        assert len(loader._test) == 3 - train_size
+    # endregion Init tests
+
+    # region Iterator tests
+    @pytest.mark.parametrize("dataset", [
+        "train", "test"
+    ])
+    @pytest.mark.parametrize("batch_size", [
+        1, 2, 3
+    ])
+    @pytest.mark.parametrize("loader", [
+        0, 1/3, 2/3, 1
+    ], indirect=["loader"])
+    def test_iter(
+        self,
+        loader,
+        data,
+        batch_size,
+        dataset
+    ):
+        """
+        Test creating an iterator for a dataset.
+        """
+        true_x, true_labels = data
+        for i, (x, label) in enumerate(
+            loader(dataset, batch_size, shuffle=False)
+        ):
+            paths = getattr(loader, f"_{dataset}")[
+                i * batch_size: (i + 1) * batch_size]
+            true_idxs = [int(path.stem) for path in paths]
+            assert np.array_equal(x, true_x[true_idxs])
+            assert label == [true_labels[idx] for idx in true_idxs]
+
+    @pytest.mark.parametrize("loader", [1], indirect=["loader"])
+    def test_invalid_iter(
+        self,
+        loader
+    ):
+        """
+        Test attempting to create an iterator for an invalid dataset.
+        """
+        with pytest.raises(ValueError):
+            loader("invalid", 1)
+
+    # endregion Iterator tests
+
+    # region Classes tests
+    @pytest.mark.parametrize("loader", [1], indirect=["loader"])
+    def test_classes(
+        self,
+        loader,
+        data
+    ):
+        """
+        Test the classes property.
+        """
+        assert loader._classes == []
+        _, classes = data
+        classes = list(sorted({str(x) for x in classes}))
+        assert loader.classes == classes
+        assert loader._classes == classes
+        assert loader.classes == classes
+    # endregion Classes tests
