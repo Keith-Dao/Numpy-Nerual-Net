@@ -24,54 +24,57 @@ class TestCrossEntropyLoss:
         return CrossEntropyLoss(request.param)
 
     @pytest.fixture
-    def data_small_close(self) -> tuple[NDArray, NDArray]:
+    def data_small_close(self) -> tuple[NDArray, NDArray, list[int]]:
         """
         A single example with logits close to the target label after
         applying softmax to the logits.
 
         Returns:
-            Logits and one-hot encoded label.
+            Logits, one-hot encoded label and ground truth labels.
         """
         return (
             np.array([1, 0, 0]),
-            np.array([1, 0, 0])
+            np.array([1, 0, 0]),
+            [0]
         )
 
     @pytest.fixture
-    def data_small_exact(self) -> tuple[NDArray, NDArray]:
+    def data_small_exact(self) -> tuple[NDArray, NDArray, list[int]]:
         """
         A single example with logits that exactly match the target label after
         applying softmax to the logits.
 
         Returns:
-            Logits and one-hot encoded label.
+            Logits, one-hot encoded label and ground truth labels.
         """
         return (
             np.array([0, 999, 0]),
-            np.array([0, 1, 0])
+            np.array([0, 1, 0]),
+            [1]
         )
 
     @pytest.fixture
-    def data_small_far(self) -> tuple[NDArray, NDArray]:
+    def data_small_far(self) -> tuple[NDArray, NDArray, list[int]]:
         """
         A single example with logits that do not match the target label after
         applying softmax to the logits.
 
         Returns:
-            Logits and one-hot encoded label.
+            Logits, one-hot encoded label and ground truth labels
         """
         return (
             np.array([0, 1, 1]),
-            np.array([1, 0, 0])
+            np.array([1, 0, 0]),
+            [0]
         )
 
     @pytest.fixture
-    def data_large(self) -> tuple[NDArray, NDArray]:
+    def data_large(self) -> tuple[NDArray, NDArray, list[int]]:
         """
         An example with logits of minibatch size 3.
 
         Returns:
-            Logits and one-hot encoded labels.
+            Logits, one-hot encoded labels and ground truth labels.
         """
         return (
             np.array([
@@ -83,7 +86,8 @@ class TestCrossEntropyLoss:
                 [1, 0, 0],
                 [1, 0, 0],
                 [1, 0, 0]
-            ])
+            ]),
+            [0, 0, 0]
         )
     # endregion Fixtures
 
@@ -99,7 +103,12 @@ class TestCrossEntropyLoss:
         """
         Test the forward pass for cross entropy loss.
         """
-        logits, labels = request.getfixturevalue(data)
+        logits, one_hot_encoded, labels = request.getfixturevalue(data)
+        assert math.isclose(
+            loss(logits, one_hot_encoded),
+            result,
+            abs_tol=FLOAT_TOLERANCE
+        )
         assert math.isclose(
             loss(logits, labels),
             result,
@@ -131,7 +140,9 @@ class TestCrossEntropyLoss:
         """
         Test the backward pass for cross entropy loss.
         """
-        logits, labels = request.getfixturevalue(data)
+        logits, one_hot_encoded, labels = request.getfixturevalue(data)
+        loss(logits, one_hot_encoded)
+        assert np.allclose(loss.backward(), grad, atol=FLOAT_TOLERANCE)
         loss(logits, labels)
         assert np.allclose(loss.backward(), grad, atol=FLOAT_TOLERANCE)
 
@@ -146,9 +157,11 @@ class TestCrossEntropyLoss:
         """
         Test an error is raised when backward is called before forward.
         """
-        logits, labels = request.getfixturevalue(data)
+        logits, one_hot_encoded, labels = request.getfixturevalue(data)
         with pytest.raises(RuntimeError):
             loss.backward()
+        loss(logits, one_hot_encoded)
+        loss.backward()
         loss(logits, labels)
         loss.backward()
     # endregion Backward pass tests

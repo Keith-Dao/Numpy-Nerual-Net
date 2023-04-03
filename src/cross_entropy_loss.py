@@ -29,25 +29,27 @@ class CrossEntropyLoss:
             reduction: Name of the reduction method (mean, sum)
         """
         self._probabilities: NDArray | None = None
-        self._labels: NDArray | None = None
+        self._target: NDArray | None = None
         self.reduction: str = reduction
 
     # region Forward pass
-    def forward(self, logits: NDArray, labels: NDArray) -> float:
+    def forward(self, logits: NDArray, targets: NDArray | list[int]) -> float:
         """
         Calculate the cross entropy loss.
 
         Args:
             logits: The logits to calculate the cross entropy loss on
-            labels: The one-hot encoded labels
+            targets: The one-hot encoded labels or the class labels
         Returns:
             The cross entropy loss.
         """
         self._probabilities = utils.softmax(logits)
-        self._labels = labels
+        if isinstance(targets, list):
+            targets = utils.one_hot_encode(targets, logits.shape[-1])
+        self._target = targets
 
         return CrossEntropyLoss.REDUCTIONS[self.reduction](
-            -np.sum(labels * utils.log_softmax(logits), axis=-1),
+            -np.sum(targets * utils.log_softmax(logits), axis=-1),
             axis=None
         )
     # endregion Forward pass
@@ -60,7 +62,7 @@ class CrossEntropyLoss:
         Returns:
             The gradients with respect to the predictions.
         """
-        if self._probabilities is None or self._labels is None:
+        if self._probabilities is None or self._target is None:
             raise RuntimeError("forward must be called before backward.")
 
         # Rescale the gradients
@@ -68,20 +70,20 @@ class CrossEntropyLoss:
         if self.reduction == "sum" or len(self._probabilities.shape) == 1:
             batch_size = 1
 
-        return (self._probabilities - self._labels) / batch_size
+        return (self._probabilities - self._target) / batch_size
 
     # endregion Backward pass
 
     # region Built-ins
-    def __call__(self, logits: NDArray, labels: NDArray) -> float:
+    def __call__(self, logits: NDArray, targets: NDArray | list[int]) -> float:
         """
         Calculate the cross entropy loss.
 
         Args:
             logits: The logits to calculate the cross entropy loss on
-            labels: The one-hot encoded labels
+            targets: The one-hot encoded labels or the class labels
         Returns:
             The cross entropy loss.
         """
-        return self.forward(logits, labels)
+        return self.forward(logits, targets)
     # endregion Built-ins
