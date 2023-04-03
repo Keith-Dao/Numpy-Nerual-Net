@@ -426,6 +426,7 @@ class TestLinear:
         Tests the to dict method.
         """
         assert layer.to_dict() == {
+            "class": "Linear",
             "weight": [[1, 2, 3], [4, 5, 6]],
             "bias": [1, 2],
             "activation": activation

@@ -18,16 +18,26 @@ class Linear:
     # region Setup
     def __init__(
         self,
-        in_: int,
-        out_: int,
+        in_channels: int,
+        out_channels: int,
         *,
         weight_init: Callable[..., NDArray] = np.random.normal,
         bias_init: Callable[..., NDArray] = np.random.normal,
         activation: Type[act.ActivationFunction] = act.NoActivation,
     ) -> None:
+        """
+        Linear layer init.
+
+        Args:
+            in_channels: The number of input channels
+            out_channels: The number of output channels
+            weight_init: Function to initialise the weight matrix
+            bias_init: Function to initialise the bias vector
+            activation: The activation function to use
+        """
         # Forward pass
-        self._weight: NDArray = weight_init(size=(out_, in_))
-        self._bias: NDArray = bias_init(size=out_)
+        self._weight: NDArray = weight_init(size=(out_channels, in_channels))
+        self._bias: NDArray = bias_init(size=out_channels)
         self._activation: act.ActivationFunction = activation()
         self._eval: bool = False
 
@@ -122,7 +132,7 @@ class Linear:
 
         if activation_function is not None:
             self._load_activation(activation_function)
-    # endregion load
+    # endregion Load
 
     # region Save
     def to_dict(self) -> dict[str, Any]:
@@ -138,6 +148,7 @@ class Linear:
             Attributes listed above as a dictionary.
         """
         return {
+            "class": type(self).__name__,
             "weight": self._weight.tolist(),
             "bias": self._bias.tolist(),
             "activation": type(self._activation).__name__
