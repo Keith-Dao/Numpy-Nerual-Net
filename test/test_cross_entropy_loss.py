@@ -91,6 +91,21 @@ class TestCrossEntropyLoss:
         )
     # endregion Fixtures
 
+    # region Save tests
+    @pytest.mark.parametrize("loss, reduction", [
+        ("sum", "sum"),
+        ("mean", "mean")
+    ], indirect=["loss"])
+    def test_to_dict(self, loss, reduction):
+        """
+        Test the to_dict method.
+        """
+        assert loss.to_dict() == {
+            "class": "CrossEntropyLoss",
+            "reduction": reduction
+        }
+    # endregion Save tests
+
     # region Forward pass tests
     @pytest.mark.parametrize("loss, data, result", [
         ("mean", "data_small_close", 0.5514),
@@ -114,6 +129,72 @@ class TestCrossEntropyLoss:
             result,
             abs_tol=FLOAT_TOLERANCE
         )
+
+    @pytest.mark.parametrize("loss", [
+        "mean", "sum"
+    ], indirect=["loss"])
+    @pytest.mark.parametrize("data", [
+        (np.array([1, 1, 1]), []),
+        (np.array([]), [1, 1, 1]),
+        (np.array([]), [])
+    ])
+    def test_forward_with_missing_data(self, loss, data):
+        """
+        Test the forward pass with missing data.
+        """
+        logits, targets = data
+        with pytest.raises(ValueError):
+            loss(logits, targets)
+
+    @pytest.mark.parametrize("loss", [
+        "mean", "sum"
+    ], indirect=["loss"])
+    @pytest.mark.parametrize("data", [
+        (np.array([1, 1, 1]), [1.0]),
+        (np.array([1, 1, 1]), [[1]]),
+        (np.array([1, 1, 1]), ["test"]),
+    ])
+    def test_forward_with_wrong_label_type(self, loss, data):
+        """
+        Test the forward pass with the wrong label type.
+        """
+        logits, targets = data
+        with pytest.raises(TypeError):
+            loss(logits, targets)
+
+    @pytest.mark.parametrize("loss", [
+        "mean", "sum"
+    ], indirect=["loss"])
+    @pytest.mark.parametrize("data", [
+        (np.array([1, 1, 1]), [1, 2]),
+        (np.array([[1, 1, 1], [1, 1, 1]]), [1]),
+        (np.array([[1, 1, 1]]), np.array([[0, 1, 0], [0, 0, 1]])),
+        (np.array([[1, 1, 1], [1, 1, 1]]), np.array([[0, 1, 0]])),
+
+    ])
+    def test_forward_with_mismatched_shape(self, loss, data):
+        """
+        Test the forward pass with mismatched shapes.
+        """
+        logits, targets = data
+        with pytest.raises(ValueError):
+            loss(logits, targets)
+
+    @pytest.mark.parametrize("loss", [
+        "mean", "sum"
+    ], indirect=["loss"])
+    @pytest.mark.parametrize("data", [
+        (np.array([1, 1, 1]), [3]),
+        (np.array([[1, 1, 1], [1, 1, 1]]), [1, 4])
+
+    ])
+    def test_forward_with_invalid_labels(self, loss, data):
+        """
+        Test the forward pass with mismatched shapes.
+        """
+        logits, targets = data
+        with pytest.raises(ValueError):
+            loss(logits, targets)
     # endregion Forward pass tests
 
     # region Backward pass tests
