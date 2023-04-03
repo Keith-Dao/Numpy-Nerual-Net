@@ -43,10 +43,40 @@ class CrossEntropyLoss:
         Returns:
             The cross entropy loss.
         """
-        self._probabilities = utils.softmax(logits)
+        if len(targets) < 1:
+            raise ValueError(
+                f"Length of targets must be > 1, got {len(targets)}."
+            )
+
+        if len(logits) < 1:
+            raise ValueError(
+                f"Length of logits must be > 1, got {len(logits)}."
+            )
+
+        num_classes = logits.shape[-1]
         if isinstance(targets, list):
-            targets = utils.one_hot_encode(targets, logits.shape[-1])
+            if not isinstance(targets[0], int):
+                raise TypeError(
+                    "Targets must either be a NumPy array or a list"
+                    f" of ints, got a list of {type(targets[0]).__name__}."
+                )
+            try:
+                targets = utils.one_hot_encode(targets, num_classes)
+            except IndexError as ex:
+                raise ValueError(
+                    "Received a label index greater than the number"
+                    " of classes."
+                ) from ex
+
+        if (
+            logits.reshape(-1, num_classes).shape
+            != targets.reshape(-1, num_classes).shape
+        ):
+            raise ValueError(
+                f"The shape of logits ({logits.shape}) does not match the"
+                f" shape of targets ({targets.shape}). ")
         self._target = targets
+        self._probabilities = utils.softmax(logits)
 
         return CrossEntropyLoss.REDUCTIONS[self.reduction](
             -np.sum(targets * utils.log_softmax(logits), axis=-1),
