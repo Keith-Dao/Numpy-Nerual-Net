@@ -91,6 +91,21 @@ class TestCrossEntropyLoss:
         )
     # endregion Fixtures
 
+    # region Save tests
+    @pytest.mark.parametrize("loss, reduction", [
+        ("sum", "sum"),
+        ("mean", "mean")
+    ], indirect=["loss"])
+    def test_to_dict(self, loss, reduction):
+        """
+        Test the to_dict method.
+        """
+        assert loss.to_dict() == {
+            "class": "CrossEntropyLoss",
+            "reduction": reduction
+        }
+    # endregion Save tests
+
     # region Forward pass tests
     @pytest.mark.parametrize("loss, data, result", [
         ("mean", "data_small_close", 0.5514),

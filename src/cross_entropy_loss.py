@@ -1,8 +1,8 @@
 """
 This module contains the cross entropy loss class.
 """
+from typing import Any, Callable
 
-from typing import Callable
 import numpy as np
 from numpy.typing import NDArray
 
@@ -31,6 +31,20 @@ class CrossEntropyLoss:
         self._probabilities: NDArray | None = None
         self._target: NDArray | None = None
         self.reduction: str = reduction
+
+    # region Save
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Get all relevant attributes in a serialisable format.
+
+        Attributes include:
+            - reduction -- the reduction method used.
+        """
+        return {
+            "class": type(self).__name__,
+            "reduction": self.reduction
+        }
+    # endregion Save
 
     # region Forward pass
     def forward(self, logits: NDArray, targets: NDArray | list[int]) -> float:
