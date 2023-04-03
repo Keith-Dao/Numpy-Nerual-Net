@@ -148,6 +148,7 @@ class Linear:
             Attributes listed above as a dictionary.
         """
         return {
+            "class": type(self).__name__,
             "weight": self._weight.tolist(),
             "bias": self._bias.tolist(),
             "activation": type(self._activation).__name__
