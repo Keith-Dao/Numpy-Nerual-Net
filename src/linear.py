@@ -161,7 +161,8 @@ class Linear:
         Perform the forward pass for the layer.
 
         Args:
-            inputs: The inputs required to perform the forward pass.
+            inputs: The inputs required to perform the forward pass
+
         Returns:
             Result from the forward pass.
         """
@@ -209,6 +210,7 @@ class Linear:
         Args:
             grad: The propagated gradients
             learning_rate: The learning rate
+
         Returns:
             The gradient with respect to the input.
         """

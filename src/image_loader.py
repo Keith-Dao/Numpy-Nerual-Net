@@ -177,10 +177,12 @@ class ImageLoader:
         Args:
             dataset: The name of the dataset to use.
             batch_size: The size of each batch
+
         Keyword args:
             drop_last: Whether or not to drop the last batch if it does not
                 match the batch size
             shuffle: Whether or not to shuffle the data
+
         Returns:
             Dataset iterator.
         """
@@ -234,10 +236,12 @@ class ImageLoader:
         Args:
             dataset: The name of the dataset to use.
             batch_size: The size of each batch
+
         Keyword args:
             drop_last: Whether or not to drop the last batch if it does not
                 match the batch size
             shuffle: Whether or not to shuffle the data
+
         Returns:
             Dataset iterator.
         """
