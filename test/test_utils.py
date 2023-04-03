@@ -6,7 +6,7 @@ from collections import Counter
 import numpy as np
 import pytest
 
-from src.utils import softmax, log_softmax, shuffle
+from src.utils import one_hot_encode, softmax, log_softmax, shuffle
 from . import FLOAT_TOLERANCE
 
 
@@ -88,3 +88,19 @@ class TestShuffle:
             f"Shuffle should be {'' if inplace else 'not '}done inplace"
         assert not equal(data_copy, shuffled)
         assert Counter(data_copy) == Counter(shuffled)
+
+
+class TestOneHotEncode:
+    """
+    One hot encode tester.
+    """
+    @pytest.mark.parametrize("labels, classes, encoded", [
+        ([0, 1, 2], 3, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])),
+        ([1, 0, 2], 3, np.array([[0, 1, 0], [1, 0, 0], [0, 0, 1]])),
+        ([3], 10, np.array([[0, 0, 0, 1, 0, 0, 0, 0, 0, 0]]))
+    ])
+    def test_one_hot_encode(self, labels, classes, encoded):
+        """
+        Test the one hot encode function.
+        """
+        assert np.array_equal(one_hot_encode(labels, classes), encoded)

@@ -50,3 +50,19 @@ def shuffle(data: list | NDArray, inplace: bool = False) -> list | NDArray:
         j = random.randint(0, i - 1)
         data[i], data[j] = data[j], data[i]
     return data
+
+
+def one_hot_encode(labels: list[int], classes: int) -> NDArray:
+    """
+    One hot encode the labels.
+
+    Args:
+        labels: The label of each example
+        classes: The total number of classes in the dataset
+    Returns:
+        The one hot encoded labels.
+    """
+    encoded = np.zeros((len(labels), classes))
+    rows, cols = zip(*enumerate(labels))
+    encoded[rows, cols] = 1
+    return encoded
