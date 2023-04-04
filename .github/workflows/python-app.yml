@@ -25,13 +25,16 @@ jobs:
           make install-test
       - name: Lint with flake8
         run: |
+          . .env/bin/activate
           # stop the build if there a-re Python syntax errors or undefined names
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           # exit-zero treats all errors as warnings.
           flake8 . --count --exit-zero --max-complexity=10 --statistics
       - name: Lint with pylint
         run: |
+          . .env/bin/activate
           pylint $(git ls-files 'src/*.py' | grep -v 'test')
       - name: Test with pytest
         run: |
+          . .env/bin/activate
           pytest -v
