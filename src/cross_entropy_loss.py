@@ -38,7 +38,10 @@ class CrossEntropyLoss:
         Get all relevant attributes in a serialisable format.
 
         Attributes include:
-            - reduction -- the reduction method used.
+            - reduction -- the reduction method used
+
+        Returns:
+            Attributes listed above as a dictionary.
         """
         return {
             "class": type(self).__name__,
@@ -54,6 +57,7 @@ class CrossEntropyLoss:
         Args:
             logits: The logits to calculate the cross entropy loss on
             targets: The one-hot encoded labels or the class labels
+
         Returns:
             The cross entropy loss.
         """
@@ -126,6 +130,7 @@ class CrossEntropyLoss:
         Args:
             logits: The logits to calculate the cross entropy loss on
             targets: The one-hot encoded labels or the class labels
+
         Returns:
             The cross entropy loss.
         """

@@ -13,6 +13,7 @@ def softmax(in_: NDArray) -> NDArray:
 
     Args:
         in_: The input vector or matrix
+
     Returns:
         The row wise probability vector of the given input.
     """
@@ -26,6 +27,7 @@ def log_softmax(in_: NDArray) -> NDArray:
 
     Args:
         in_: The input vector or matrix
+
     Returns:
         The log softmax of the given input.
     """
@@ -40,6 +42,7 @@ def shuffle(data: list | NDArray, inplace: bool = False) -> list | NDArray:
     Args:
         data: The data to be shuffled
         inplace: Whether or not the shuffle in place
+
     Returns:
         The shuffled data.
     """
@@ -59,6 +62,7 @@ def one_hot_encode(labels: list[int], classes: int) -> NDArray:
     Args:
         labels: The label of each example
         classes: The total number of classes in the dataset
+
     Returns:
         The one hot encoded labels.
     """

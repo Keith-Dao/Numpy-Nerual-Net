@@ -20,6 +20,7 @@ class ActivationFunction(ABC):
 
         Args:
             input: Input to the function
+
         Returns:
             Result of applying the activation function to the input.
         """
