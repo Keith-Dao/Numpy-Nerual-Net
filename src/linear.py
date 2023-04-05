@@ -37,7 +37,17 @@ class Linear:
         """
         # Forward pass
         self._weight: NDArray = weight_init(size=(out_channels, in_channels))
+        if self._weight.shape != (out_channels, in_channels):
+            raise ValueError(
+                f"Invalid weight shape. Expected {(out_channels, in_channels)}"
+                f", got {self._weight.shape}"
+            )
         self._bias: NDArray = bias_init(size=out_channels)
+        if self._bias.shape != (out_channels, ):
+            raise ValueError(
+                f"Invalid weight shape. Expected {(out_channels, )}"
+                f", got {self._bias.shape}"
+            )
         self._activation: act.ActivationFunction = activation()
         self._eval: bool = False
 

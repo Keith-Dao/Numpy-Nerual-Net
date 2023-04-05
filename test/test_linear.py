@@ -258,6 +258,33 @@ class TestLinear:
         )
         assert np.array_equal(layer._weight, np.arange(1, 7).reshape(2, 3))
         assert np.array_equal(layer._bias, np.arange(1, 3))
+
+    def test_init_with_mismatched_weight_shape(self):
+        """
+        Test the layer init with a weight init function that
+        provides an mismatched shape.
+        """
+        in_, out_ = 3, 2
+
+        def weight_init(*, size: tuple[int, int]) -> NDArray:
+            return np.ones((10, 10))
+
+        with pytest.raises(ValueError):
+            Linear(in_, out_, weight_init=weight_init)
+
+    def test_init_with_mismatched_bias_shape(self):
+        """
+        Test the layer init with a bias init function that
+        provides an mismatched shape.
+        """
+        in_, out_ = 3, 2
+
+        def bias_init(*, size: tuple[int, int]) -> NDArray:
+            return np.ones(10)
+
+        with pytest.raises(ValueError):
+            Linear(in_, out_, bias_init=bias_init)
+
     # endregion Init tests
 
     # region Evaluation mode tests
