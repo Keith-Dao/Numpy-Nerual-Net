@@ -10,6 +10,7 @@ from src.activation_functions import NoActivation, ReLU
 
 
 # pylint: disable=protected-access, invalid-name, too-many-public-methods
+# pylint: disable=unused-argument
 # pyright: reportGeneralTypeIssues=false
 class TestLinear:
     """
@@ -266,7 +267,7 @@ class TestLinear:
         """
         in_, out_ = 3, 2
 
-        def weight_init(*, size: tuple[int, int]) -> NDArray:
+        def weight_init(**_) -> NDArray:
             return np.ones((10, 10))
 
         with pytest.raises(ValueError):
@@ -279,7 +280,7 @@ class TestLinear:
         """
         in_, out_ = 3, 2
 
-        def bias_init(*, size: tuple[int, int]) -> NDArray:
+        def bias_init(**_) -> NDArray:
             return np.ones(10)
 
         with pytest.raises(ValueError):
@@ -305,8 +306,8 @@ class TestLinear:
         assert not layer.eval
         assert layer._input is None
 
-    @pytest.mark.parametrize("activation", [None, "ReLU"])
-    @pytest.mark.parametrize(
+    @ pytest.mark.parametrize("activation", [None, "ReLU"])
+    @ pytest.mark.parametrize(
         "data",
         ["small", "large", "large_with_negatives"]
     )
@@ -342,7 +343,7 @@ class TestLinear:
         assert np.array_equal(layer._bias, bias)
         assert isinstance(layer._activation, ReLU)
 
-    @pytest.mark.parametrize("weight", [
+    @ pytest.mark.parametrize("weight", [
         np.arange(1, 7, dtype=float).reshape(2, 3),
         [[1, 2, 3], [4, 5, 6]]
     ])
@@ -362,7 +363,7 @@ class TestLinear:
         assert np.array_equal(layer._bias, prev_bias)
         assert layer._activation == prev_activation
 
-    @pytest.mark.parametrize("weight", [
+    @ pytest.mark.parametrize("weight", [
         np.arange(1, 7, dtype=float).reshape(3, 2),
         np.arange(1, 7, dtype=float),
         [1],
@@ -378,7 +379,7 @@ class TestLinear:
         with pytest.raises(ValueError):
             layer.load_params(weight=weight)
 
-    @pytest.mark.parametrize("bias", [np.arange(1, 3, dtype=float), [1, 2]])
+    @ pytest.mark.parametrize("bias", [np.arange(1, 3, dtype=float), [1, 2]])
     def test_load_params_bias(self, bias):
         """
         Tests the load parameter method for the bias parameter.
@@ -395,7 +396,7 @@ class TestLinear:
         assert not np.array_equal(layer._bias, prev_bias)
         assert layer._activation == prev_activation
 
-    @pytest.mark.parametrize("bias", [
+    @ pytest.mark.parametrize("bias", [
         np.arange(1, 3, dtype=float).reshape(2, 1),
         [[1, 2]],
         [1],
@@ -426,7 +427,7 @@ class TestLinear:
         assert layer._activation != prev_activation
         assert isinstance(layer._activation, ReLU)
 
-    @pytest.mark.parametrize("activation_function, exception", [
+    @ pytest.mark.parametrize("activation_function, exception", [
         ("ggopn@03m", ValueError),
         (ReLU, TypeError),
         (ReLU(), TypeError),
@@ -446,7 +447,7 @@ class TestLinear:
         with pytest.raises(exception):
             layer.load_params(activation_function=activation_function)
 
-    @pytest.mark.parametrize("activation", ["NoActivation", "ReLU"])
+    @ pytest.mark.parametrize("activation", ["NoActivation", "ReLU"])
     def test_from_dict(self, layer, activation):
         """
         Test the from_dict method.
@@ -457,7 +458,7 @@ class TestLinear:
         assert np.array_equal(new_layer._bias, layer._bias)
         assert isinstance(new_layer._activation, type(layer._activation))
 
-    @pytest.mark.parametrize("activation", ["NoActivation", "ReLU"])
+    @ pytest.mark.parametrize("activation", ["NoActivation", "ReLU"])
     def test_from_dict_with_invalid_class(self, layer, activation):
         """
         Test the from_dict method with an invalid class
@@ -469,7 +470,7 @@ class TestLinear:
     # endregion Load tests
 
     # region Save tests
-    @pytest.mark.parametrize("activation", ["NoActivation", "ReLU"])
+    @ pytest.mark.parametrize("activation", ["NoActivation", "ReLU"])
     def test_to_dict(self, layer, activation):
         """
         Tests the to_dict method.
@@ -483,8 +484,8 @@ class TestLinear:
     # endregion Save tests
 
     # region Forward pass tests
-    @pytest.mark.parametrize("activation", [None, "ReLU"])
-    @pytest.mark.parametrize("data", [
+    @ pytest.mark.parametrize("activation", [None, "ReLU"])
+    @ pytest.mark.parametrize("data", [
         "small", "large",  "large_with_negatives"
     ])
     def test_forward(self, layer, data, request):
@@ -497,8 +498,8 @@ class TestLinear:
     # endregion forward pass tests
 
     # region Backward pass tests
-    @pytest.mark.parametrize("activation", [None, "ReLU"])
-    @pytest.mark.parametrize("data, grads", [
+    @ pytest.mark.parametrize("activation", [None, "ReLU"])
+    @ pytest.mark.parametrize("data, grads", [
         ("small", "small_grad"),
         ("large", "large_grad"),
         ("large_with_negatives", "large_with_negatives_grad")
@@ -517,8 +518,8 @@ class TestLinear:
         assert np.array_equal(weight_grad, true_weight_grad)
         assert np.array_equal(bias_grad, true_bias_grad)
 
-    @pytest.mark.parametrize("activation", [None, "ReLU"])
-    @pytest.mark.parametrize(
+    @ pytest.mark.parametrize("activation", [None, "ReLU"])
+    @ pytest.mark.parametrize(
         "data",
         ["small", "large", "large_with_negatives"],
     )
@@ -533,8 +534,8 @@ class TestLinear:
         layer(X)
         layer.backward(grad)
 
-    @pytest.mark.parametrize("activation", [None, "ReLU"])
-    @pytest.mark.parametrize("data, grads", [
+    @ pytest.mark.parametrize("activation", [None, "ReLU"])
+    @ pytest.mark.parametrize("data, grads", [
         ("small", "small_grad"),
         ("large", "large_grad"),
         ("large_with_negatives", "large_with_negatives_grad")

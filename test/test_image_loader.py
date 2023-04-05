@@ -5,10 +5,10 @@ from collections import Counter
 import shutil
 from typing import Callable
 
-from PIL import Image
-import pytest
 import numpy as np
 from numpy.typing import NDArray
+from PIL import Image
+import pytest
 
 from src.image_loader import DatasetIterator, ImageLoader
 
