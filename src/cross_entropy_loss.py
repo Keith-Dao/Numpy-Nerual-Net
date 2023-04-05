@@ -1,6 +1,7 @@
 """
 This module contains the cross entropy loss class.
 """
+from __future__ import annotations
 from typing import Any, Callable
 
 import numpy as np
@@ -31,6 +32,27 @@ class CrossEntropyLoss:
         self._probabilities: NDArray | None = None
         self._target: NDArray | None = None
         self.reduction: str = reduction
+
+    # region Load
+    @classmethod
+    def from_dict(cls, attributes: dict[str, Any]) -> CrossEntropyLoss:
+        """
+        Create a cross-entropy loss instance from an attributes dictionary.
+
+        Args:
+            attributes: The attributes of the cross-entropy loss instance
+
+        Returns:
+            A cross-entropy loss instance with the provided attributes.
+        """
+        if cls.__name__ != attributes["class"]:
+            raise ValueError(
+                f"Invalid class value in attributes. Expected {cls.__name__},"
+                f" got {attributes['class']}."
+            )
+
+        return cls(attributes["reduction"])
+    # endregion Load
 
     # region Save
     def to_dict(self) -> dict[str, Any]:

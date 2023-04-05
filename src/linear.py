@@ -37,7 +37,17 @@ class Linear:
         """
         # Forward pass
         self._weight: NDArray = weight_init(size=(out_channels, in_channels))
+        if self._weight.shape != (out_channels, in_channels):
+            raise ValueError(
+                f"Invalid weight shape. Expected {(out_channels, in_channels)}"
+                f", got {self._weight.shape}"
+            )
         self._bias: NDArray = bias_init(size=out_channels)
+        if self._bias.shape != (out_channels, ):
+            raise ValueError(
+                f"Invalid weight shape. Expected {(out_channels, )}"
+                f", got {self._bias.shape}"
+            )
         self._activation: act.ActivationFunction = activation()
         self._eval: bool = False
 
@@ -71,7 +81,7 @@ class Linear:
         new_weight = np.array(weight)
         if new_weight.shape != self._weight.shape:
             raise ValueError(
-                f"The new weight has a shape of ${new_weight.shape},"
+                f"The new weight has a shape of {new_weight.shape},"
                 f" expected {self._weight.shape}."
             )
         self._weight = new_weight
@@ -86,7 +96,7 @@ class Linear:
         new_bias = np.array(bias)
         if new_bias.shape != self._bias.shape:
             raise ValueError(
-                f"The new bias has a shape of ${new_bias.shape},"
+                f"The new bias has a shape of {new_bias.shape},"
                 f" expected {self._bias.shape}."
             )
         self._bias = new_bias
@@ -132,6 +142,31 @@ class Linear:
 
         if activation_function is not None:
             self._load_activation(activation_function)
+
+    @classmethod
+    def from_dict(cls, attributes: dict[str, Any]) -> Linear:
+        """
+        Create a linear instance from an attributes dictionary.
+
+        Args:
+            attributes: The attributes of the linear instance
+
+        Returns:
+            A linear instance with the provided attributes.
+        """
+        if cls.__name__ != attributes["class"]:
+            raise ValueError(
+                f"Invalid class value in attributes. Expected {cls.__name__},"
+                f" got {attributes['class']}."
+            )
+
+        out_channels, in_channels = np.array(attributes["weight"]).shape
+        linear = cls(in_channels, out_channels)
+        linear.load_params(**{
+            key: value for key, value in attributes.items() if key != "class"
+        })
+        return linear
+
     # endregion Load
 
     # region Save
@@ -142,7 +177,8 @@ class Linear:
         Attributes includes:
             - weight -- weights as a two-dimensional list
             - bias -- bias as a list
-            - activation -- name of the activation function as a string
+            - activation_function -- name of the activation function as a
+                                     string
 
         Returns:
             Attributes listed above as a dictionary.
@@ -151,7 +187,7 @@ class Linear:
             "class": type(self).__name__,
             "weight": self._weight.tolist(),
             "bias": self._bias.tolist(),
-            "activation": type(self._activation).__name__
+            "activation_function": type(self._activation).__name__
         }
     # endregion Save
 

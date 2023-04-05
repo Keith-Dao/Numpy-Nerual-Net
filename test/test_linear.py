@@ -258,9 +258,37 @@ class TestLinear:
         )
         assert np.array_equal(layer._weight, np.arange(1, 7).reshape(2, 3))
         assert np.array_equal(layer._bias, np.arange(1, 3))
+
+    def test_init_with_mismatched_weight_shape(self):
+        """
+        Test the layer init with a weight init function that
+        provides an mismatched shape.
+        """
+        in_, out_ = 3, 2
+
+        def weight_init(*, size: tuple[int, int]) -> NDArray:
+            return np.ones((10, 10))
+
+        with pytest.raises(ValueError):
+            Linear(in_, out_, weight_init=weight_init)
+
+    def test_init_with_mismatched_bias_shape(self):
+        """
+        Test the layer init with a bias init function that
+        provides an mismatched shape.
+        """
+        in_, out_ = 3, 2
+
+        def bias_init(*, size: tuple[int, int]) -> NDArray:
+            return np.ones(10)
+
+        with pytest.raises(ValueError):
+            Linear(in_, out_, bias_init=bias_init)
+
     # endregion Init tests
 
     # region Evaluation mode tests
+
     def test_set_eval(self, layer):
         """
         Test setting the evaluation mode.
@@ -417,19 +445,40 @@ class TestLinear:
         layer = Linear(in_, out_)
         with pytest.raises(exception):
             layer.load_params(activation_function=activation_function)
+
+    @pytest.mark.parametrize("activation", ["NoActivation", "ReLU"])
+    def test_from_dict(self, layer, activation):
+        """
+        Test the from_dict method.
+        """
+        attributes = layer.to_dict()
+        new_layer = Linear.from_dict(attributes)
+        assert np.array_equal(new_layer._weight, layer._weight)
+        assert np.array_equal(new_layer._bias, layer._bias)
+        assert isinstance(new_layer._activation, type(layer._activation))
+
+    @pytest.mark.parametrize("activation", ["NoActivation", "ReLU"])
+    def test_from_dict_with_invalid_class(self, layer, activation):
+        """
+        Test the from_dict method with an invalid class
+        """
+        attributes = layer.to_dict()
+        attributes["class"] = "test"
+        with pytest.raises(ValueError):
+            Linear.from_dict(attributes)
     # endregion Load tests
 
     # region Save tests
     @pytest.mark.parametrize("activation", ["NoActivation", "ReLU"])
     def test_to_dict(self, layer, activation):
         """
-        Tests the to dict method.
+        Tests the to_dict method.
         """
         assert layer.to_dict() == {
             "class": "Linear",
             "weight": [[1, 2, 3], [4, 5, 6]],
             "bias": [1, 2],
-            "activation": activation
+            "activation_function": activation
         }
     # endregion Save tests
 
