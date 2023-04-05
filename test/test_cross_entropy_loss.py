@@ -106,7 +106,7 @@ class TestCrossEntropyLoss:
     @pytest.mark.parametrize("loss", [
         "sum", "mean"
     ], indirect=["loss"])
-    def test_from_dict_invalid_class(self, loss):
+    def test_from_dict_with_invalid_class(self, loss):
         """
         Test the from_dict method with an invalid class.
         """

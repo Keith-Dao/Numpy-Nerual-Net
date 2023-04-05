@@ -288,6 +288,7 @@ class TestLinear:
     # endregion Init tests
 
     # region Evaluation mode tests
+
     def test_set_eval(self, layer):
         """
         Test setting the evaluation mode.
@@ -444,19 +445,40 @@ class TestLinear:
         layer = Linear(in_, out_)
         with pytest.raises(exception):
             layer.load_params(activation_function=activation_function)
+
+    @pytest.mark.parametrize("activation", ["NoActivation", "ReLU"])
+    def test_from_dict(self, layer, activation):
+        """
+        Test the from_dict method.
+        """
+        attributes = layer.to_dict()
+        new_layer = Linear.from_dict(attributes)
+        assert np.array_equal(new_layer._weight, layer._weight)
+        assert np.array_equal(new_layer._bias, layer._bias)
+        assert isinstance(new_layer._activation, type(layer._activation))
+
+    @pytest.mark.parametrize("activation", ["NoActivation", "ReLU"])
+    def test_from_dict_with_invalid_class(self, layer, activation):
+        """
+        Test the from_dict method with an invalid class
+        """
+        attributes = layer.to_dict()
+        attributes["class"] = "test"
+        with pytest.raises(ValueError):
+            Linear.from_dict(attributes)
     # endregion Load tests
 
     # region Save tests
     @pytest.mark.parametrize("activation", ["NoActivation", "ReLU"])
     def test_to_dict(self, layer, activation):
         """
-        Tests the to dict method.
+        Tests the to_dict method.
         """
         assert layer.to_dict() == {
             "class": "Linear",
             "weight": [[1, 2, 3], [4, 5, 6]],
             "bias": [1, 2],
-            "activation": activation
+            "activation_function": activation
         }
     # endregion Save tests
 
