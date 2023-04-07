@@ -148,7 +148,7 @@ class TestCrossEntropyLoss:
         Test the from_dict method with an invalid reduction.
         """
         attributes = loss.to_dict()
-        attributes["reduction"] = "test"
+        attributes["reduction"] = reduction
         with pytest.raises(ValueError):
             CrossEntropyLoss.from_dict(attributes)
     # endregion Load tests
@@ -308,3 +308,21 @@ class TestCrossEntropyLoss:
         loss(logits, labels)
         loss.backward()
     # endregion Backward pass tests
+
+    # region Built-ins tests
+    @pytest.mark.parametrize("loss, other, result", [
+        ("sum", CrossEntropyLoss("sum"), True),
+        ("sum", CrossEntropyLoss("mean"), False),
+        ("sum", {"reduction": "sum"}, False),
+        ("sum", "sum", False),
+        ("mean", CrossEntropyLoss("mean"), True),
+        ("mean", CrossEntropyLoss("sum"), False),
+        ("mean", {"reduction": "mean"}, False),
+        ("mean", "mean", False),
+    ], indirect=["loss"])
+    def test_dunder_eq(self, loss, other, result):
+        """
+        Test the __eq__ method.
+        """
+        assert (loss == other) is result
+    # endregion Built-ins tests

@@ -2,7 +2,7 @@
 This module contains the cross entropy loss class.
 """
 from __future__ import annotations
-from typing import Any, Callable
+from typing import Any, Callable, Hashable
 
 import numpy as np
 from numpy.typing import NDArray
@@ -181,4 +181,19 @@ class CrossEntropyLoss:
             The cross entropy loss.
         """
         return self.forward(logits, targets)
+
+    def __eq__(self, other: object) -> bool:
+        """
+        Checks if another is equal to this.
+
+        Args:
+            other: Object to compare with
+
+        Returns:
+            True if all attributes are equal, otherwise False.
+        """
+        return (
+            isinstance(other, type(self))
+            and self.reduction == other.reduction
+        )
     # endregion Built-ins
