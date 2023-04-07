@@ -696,3 +696,97 @@ class TestLinear:
             np.arange(1, 3, dtype=float) - learning_rate * true_bias_grad
         )
     # endregion backward tests
+
+    # region Built-ins tests
+    @pytest.mark.parametrize("layer, other, result", [
+        # same
+        (
+            Linear(
+                3, 2,
+                weight_init=lambda size: np.ones(shape=size),
+                bias_init=lambda size: np.ones(shape=size)
+            ),
+            Linear(
+                3, 2,
+                weight_init=lambda size: np.ones(shape=size),
+                bias_init=lambda size: np.ones(shape=size)
+            ),
+            True
+        ),
+        # shape different
+        (
+            Linear(
+                3, 2,
+                weight_init=lambda size: np.ones(shape=size),
+                bias_init=lambda size: np.ones(shape=size)
+            ),
+            Linear(
+                2, 3,
+                weight_init=lambda size: np.ones(shape=size),
+                bias_init=lambda size: np.ones(shape=size)
+            ),
+            False
+        ),
+        # weight different
+        (
+            Linear(
+                3, 2,
+                weight_init=lambda size: np.ones(shape=size),
+                bias_init=lambda size: np.ones(shape=size)
+            ),
+            Linear(
+                3, 2,
+                weight_init=lambda size: np.zeros(shape=size),
+                bias_init=lambda size: np.ones(shape=size)
+            ),
+            False
+        ),
+        # bias different
+        (
+            Linear(
+                3, 2,
+                weight_init=lambda size: np.ones(shape=size),
+                bias_init=lambda size: np.ones(shape=size)
+            ),
+            Linear(
+                3, 2,
+                weight_init=lambda size: np.ones(shape=size),
+                bias_init=lambda size: np.zeros(shape=size)
+            ),
+            False
+        ),
+        # values different
+        (
+            Linear(3, 2),
+            Linear(3, 2),
+            False
+        ),
+        # activation different
+        (
+            Linear(
+                3, 2,
+                weight_init=lambda size: np.ones(shape=size),
+                bias_init=lambda size: np.ones(shape=size),
+                activation=NoActivation
+            ),
+            Linear(
+                3, 2,
+                weight_init=lambda size: np.ones(shape=size),
+                bias_init=lambda size: np.ones(shape=size),
+                activation=ReLU
+            ),
+            False
+        ),
+        # invalid types
+        (Linear(3, 2), 1, False),
+        (Linear(3, 2), 1.23, False),
+        (Linear(3, 2), [], False),
+        (Linear(3, 2), "TEST", False),
+        (Linear(3, 2), {}, False),
+    ])
+    def test_dunder_eq(self, layer, other, result):
+        """
+        Tests the __eq__ method.
+        """
+        assert (layer == other) is result
+    # endregion Built-ins tests

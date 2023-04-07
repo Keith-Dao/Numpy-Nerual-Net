@@ -44,7 +44,6 @@ class CrossEntropyLoss:
 
     @reduction.setter
     def reduction(self, reduction: str) -> None:
-        print(dir(reduction))
         if (
             not isinstance(reduction, Hashable)
             or reduction not in CrossEntropyLoss.REDUCTIONS

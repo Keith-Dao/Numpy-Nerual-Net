@@ -311,4 +311,21 @@ class Linear:
     # region Built-ins
     def __call__(self, input_: NDArray) -> NDArray:
         return self.forward(input_)
+
+    def __eq__(self, other: object) -> bool:
+        """
+        Checks if another is equal to this.
+
+        Args:
+            other: Object to compare with
+
+        Returns:
+            True if all attributes are equal, otherwise False.
+        """
+        return (
+            isinstance(other, type(self))
+            and np.array_equal(self.weight, other.weight)
+            and np.array_equal(self.bias, other.bias)
+            and self.activation == other.activation
+        )
     # endregion built-ins
