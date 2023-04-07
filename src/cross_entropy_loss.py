@@ -2,7 +2,7 @@
 This module contains the cross entropy loss class.
 """
 from __future__ import annotations
-from typing import Any, Callable
+from typing import Any, Callable, Hashable
 
 import numpy as np
 from numpy.typing import NDArray
@@ -31,7 +31,30 @@ class CrossEntropyLoss:
         """
         self._probabilities: NDArray | None = None
         self._target: NDArray | None = None
-        self.reduction: str = reduction
+        self._reduction: str = ""
+        self.reduction = reduction
+
+    # region Properties
+    @property
+    def reduction(self) -> str:
+        """
+        The reduction method.
+        """
+        return self._reduction
+
+    @reduction.setter
+    def reduction(self, reduction: str) -> None:
+        if (
+            not isinstance(reduction, Hashable)
+            or reduction not in CrossEntropyLoss.REDUCTIONS
+        ):
+            raise ValueError(
+                "Invalid reduction method. Expected "
+                f"{' or '.join(CrossEntropyLoss.REDUCTIONS.keys())},"
+                f" got {reduction}."
+            )
+        self._reduction = reduction
+    # endregion Properties
 
     # region Load
     @classmethod
@@ -157,4 +180,19 @@ class CrossEntropyLoss:
             The cross entropy loss.
         """
         return self.forward(logits, targets)
+
+    def __eq__(self, other: object) -> bool:
+        """
+        Checks if another is equal to this.
+
+        Args:
+            other: Object to compare with
+
+        Returns:
+            True if all attributes are equal, otherwise False.
+        """
+        return (
+            isinstance(other, type(self))
+            and self.reduction == other.reduction
+        )
     # endregion Built-ins
