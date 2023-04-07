@@ -10,6 +10,7 @@ from numpy.typing import NDArray
 from src import activation_functions as act
 
 
+# pylint: disable=too-many-instance-attributes
 class Linear:
     """
     A linear layer.
@@ -31,76 +32,127 @@ class Linear:
         Args:
             in_channels: The number of input channels
             out_channels: The number of output channels
-            weight_init: Function to initialise the weight matrix
-            bias_init: Function to initialise the bias vector
-            activation: The activation function to use
+            weight_init: Function to initialise the weight matrix that takes
+                         the parameter size
+            bias_init: Function to initialise the bias vector that takes
+                       the parameter size
+            activation: The activation function class to use
         """
         # Forward pass
-        self._weight: NDArray = weight_init(size=(out_channels, in_channels))
-        if self._weight.shape != (out_channels, in_channels):
-            raise ValueError(
-                f"Invalid weight shape. Expected {(out_channels, in_channels)}"
-                f", got {self._weight.shape}"
-            )
-        self._bias: NDArray = bias_init(size=out_channels)
-        if self._bias.shape != (out_channels, ):
-            raise ValueError(
-                f"Invalid weight shape. Expected {(out_channels, )}"
-                f", got {self._bias.shape}"
-            )
-        self._activation: act.ActivationFunction = activation()
+        self._weight: NDArray = np.zeros(shape=(out_channels, in_channels))
+        self.weight = weight_init(size=(out_channels, in_channels))
+        self._bias: NDArray = np.zeros(shape=(out_channels, ))
+        self.bias = bias_init(size=out_channels)
+        self.activation = activation
         self._eval: bool = False
 
         # Backward pass
         self._input: NDArray | None = None
     # endregion Setup
 
+    # region Properties
     # region Evaluation mode
     @property
     def eval(self):
         """
-        Layer evaluation mode.
+        Layer's evaluation mode.
         """
         return self._eval
 
     @eval.setter
     def eval(self, eval_: bool) -> None:
+        if not isinstance(eval_, bool):
+            raise TypeError(
+                "Invalid type for eval. Expected bool, got"
+                f" {type(eval_).__name__}."
+            )
+
         if eval_ != self._eval:
             self._input = None
         self._eval = eval_
     # endregion Evaluation mode
 
-    # region Load
-    def _load_weight(self, weight: list[list[float]] | NDArray) -> None:
+    # region Weights
+    @property
+    def weight(self) -> NDArray:
         """
-        Loads weight for the layer.
+        Layer's weight matrix.
+        """
+        return self._weight
 
-        Args:
-            weight: The weight values
-        """
-        new_weight = np.array(weight)
-        if new_weight.shape != self._weight.shape:
-            raise ValueError(
-                f"The new weight has a shape of {new_weight.shape},"
-                f" expected {self._weight.shape}."
+    @weight.setter
+    def weight(self, new_weight: NDArray) -> None:
+        if not isinstance(new_weight, np.ndarray):
+            raise TypeError(
+                "Invalid type for weight. Expected np.ndarray, got"
+                f" {type(new_weight).__name__}."
             )
+
+        if self.weight.shape != new_weight.shape:
+            raise ValueError(
+                f"Invalid shape for new weight. Expected {self._weight.shape},"
+                f" got {new_weight.shape}."
+            )
+
         self._weight = new_weight
+    # endregion Weights
 
-    def _load_bias(self, bias: list[float] | NDArray) -> None:
+    # region Bias
+    @property
+    def bias(self) -> NDArray:
         """
-        Loads bias for the layer.
+        Layer's bias vector.
+        """
+        return self._bias
 
-        Args:
-            bias: The bias values
-        """
-        new_bias = np.array(bias)
-        if new_bias.shape != self._bias.shape:
-            raise ValueError(
-                f"The new bias has a shape of {new_bias.shape},"
-                f" expected {self._bias.shape}."
+    @bias.setter
+    def bias(self, new_bias: NDArray) -> None:
+        if not isinstance(new_bias, np.ndarray):
+            raise TypeError(
+                "Invalid type for bias. Expected np.ndarray, got"
+                f" {type(new_bias).__name__}."
             )
-        self._bias = new_bias
 
+        if self._bias.shape != new_bias.shape:
+            raise ValueError(
+                f"Invalid weight shape. Expected {self._bias.shape}"
+                f", got {new_bias.shape}."
+            )
+
+        self._bias = new_bias
+    # endregion Bias
+
+    # region Activation function
+    @property
+    def activation(self) -> act.ActivationFunction:
+        """
+        Layer's activation function.
+        """
+        return self._activation
+
+    @activation.setter
+    def activation(self, new_activation: Type[act.ActivationFunction]) -> None:
+        # Do not allow an actual activation function instance to prevent
+        # another layer from using the same instance.
+        if not isinstance(new_activation, type):
+            raise TypeError(
+                "Invalid type for activation. Expected"
+                " type[ActivationFunction],"
+                f" got {type(new_activation).__name__}."
+            )
+
+        activation: act.ActivationFunction = new_activation()
+        if not isinstance(activation, act.ActivationFunction):
+            raise TypeError(
+                "Invalid class for activation. Expected ActivationFunction,"
+                f" got {type(activation).__name__}."
+            )
+
+        self._activation = activation
+    # endregion Activation function
+    # endregion Properties
+
+    # region Load
     def _load_activation(self, activation_function: str) -> None:
         """
         Loads the activation function for the layer.
@@ -114,7 +166,7 @@ class Linear:
                 f" {type(activation_function).__name__}, expected str."
             )
         try:
-            self._activation = getattr(act, activation_function)()
+            self.activation = getattr(act, activation_function)
         except AttributeError as exc:
             raise ValueError(
                 f"{activation_function} is not a valid activation function."
@@ -135,10 +187,10 @@ class Linear:
             bias: The bias values
         """
         if weight is not None:
-            self._load_weight(weight)
+            self.weight = np.array(weight)
 
         if bias is not None:
-            self._load_bias(bias)
+            self.bias = np.array(bias)
 
         if activation_function is not None:
             self._load_activation(activation_function)
@@ -185,9 +237,9 @@ class Linear:
         """
         return {
             "class": type(self).__name__,
-            "weight": self._weight.tolist(),
-            "bias": self._bias.tolist(),
-            "activation_function": type(self._activation).__name__
+            "weight": self.weight.tolist(),
+            "bias": self.bias.tolist(),
+            "activation_function": type(self.activation).__name__
         }
     # endregion Save
 
@@ -203,8 +255,8 @@ class Linear:
             Result from the forward pass.
         """
         self._input = input_ if not self.eval else None
-        output_: NDArray = input_ @ self._weight.T + self._bias
-        return self._activation(output_)
+        output_: NDArray = input_ @ self.weight.T + self.bias
+        return self.activation(output_)
     # endregion Forward pass
 
     # region Backward pass
@@ -232,10 +284,10 @@ class Linear:
             )
 
         # Calculate grad
-        grad = grad * self._activation.backward()
+        grad = grad * self.activation.backward()
         weight_grad = grad.T @ self._input  # dE/dw
         bias_grad = grad.sum(axis=0)  # dE/dB
-        input_grad = grad @ self._weight  # dE/dX
+        input_grad = grad @ self.weight  # dE/dX
 
         return (input_grad), (weight_grad, bias_grad)
 
@@ -251,8 +303,8 @@ class Linear:
             The gradient with respect to the input.
         """
         input_grad, (weight_grad, bias_grad) = self.backward(grad)
-        self._weight -= learning_rate * weight_grad
-        self._bias -= learning_rate * bias_grad
+        self.weight -= learning_rate * weight_grad
+        self.bias -= learning_rate * bias_grad
         return input_grad
     # endregion Backward pass
 
