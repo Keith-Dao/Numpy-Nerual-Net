@@ -91,3 +91,35 @@ class TestActivationFunctions:
         function(X)
         function.backward()
     # endregion backward tests
+
+    # region Built-ins tests
+    @pytest.mark.parametrize("first, other, result", [
+        ("no_activation", "no_activation", True),
+        ("no_activation", "relu", False),
+        ("relu", "relu", True),
+        ("relu", "no_activation", False)
+    ])
+    def test_dunder_eq(self, first, other, result, request):
+        """
+        Test the __eq__ method.
+        """
+        function, *_ = request.getfixturevalue(first)
+        other_function, *_ = request.getfixturevalue(other)
+        assert (function == other_function) is result
+
+    @pytest.mark.parametrize("data", ["no_activation", "relu"])
+    @pytest.mark.parametrize("other", [
+        "no_activation",
+        "relu",
+        1,
+        1.23,
+        [],
+        "test"
+    ])
+    def test_dunder_eq_with_invalid_types(self, data, other, request):
+        """
+        Test the __eq__ method with invalid types.
+        """
+        function, *_ = request.getfixturevalue(data)
+        assert (function == other) is False
+    # endregion Built-ins tests
