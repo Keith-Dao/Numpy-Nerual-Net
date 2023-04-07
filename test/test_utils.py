@@ -6,7 +6,7 @@ from collections import Counter
 import numpy as np
 import pytest
 
-from src.utils import one_hot_encode, softmax, log_softmax, shuffle
+from src.utils import check_type, one_hot_encode, softmax, log_softmax, shuffle
 from . import FLOAT_TOLERANCE
 
 
@@ -104,3 +104,25 @@ class TestOneHotEncode:
         Test the one hot encode function.
         """
         assert np.array_equal(one_hot_encode(labels, classes), encoded)
+
+
+class TestCheckType:
+    """
+    Check type tester.
+    """
+    @pytest.mark.parametrize("value, types, exception", [
+        (1, (int, float), None),
+        (1.23, (int, float), None),
+        ("a", (int, float), TypeError),
+        (1, int, None)
+    ])
+    def test_check_type(self, value, types, exception):
+        """
+        Test the check type function.
+        """
+        if exception is None:
+            check_type(value, types, "test")
+            return
+
+        with pytest.raises(exception):
+            check_type(value, types, "test")
