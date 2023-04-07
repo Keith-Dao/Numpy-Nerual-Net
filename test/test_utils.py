@@ -113,6 +113,7 @@ class TestCheckType:
     @pytest.mark.parametrize("value, types, exception", [
         (1, (int, float), None),
         (1.23, (int, float), None),
+        ("a", int, TypeError),
         ("a", (int, float), TypeError),
         (1, int, None)
     ])
