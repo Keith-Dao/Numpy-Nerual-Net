@@ -1,6 +1,7 @@
 """
 This module contains various utility functions.
 """
+from collections.abc import Iterable
 import random
 from typing import Any, Type
 
@@ -89,6 +90,10 @@ def check_type(
     if not isinstance(value, types):
         raise TypeError(
             f"Invalid type for {variable_name}. Expected"
-            f" {' or '.join(type_.__name__ for type_ in types)},"
-            f" got {type(value).__name__}."
+            f""" {
+                ' or '.join(type_.__name__ for type_ in types)
+                if isinstance(types, Iterable)
+                else types.__name__
+            }"""
+            f", got {type(value).__name__}."
         )
