@@ -2,6 +2,7 @@
 This module contains various utility functions.
 """
 import random
+from typing import Any, Type
 
 import numpy as np
 from numpy.typing import NDArray
@@ -70,3 +71,24 @@ def one_hot_encode(labels: list[int], classes: int) -> NDArray:
     rows, cols = zip(*enumerate(labels))
     encoded[rows, cols] = 1
     return encoded
+
+
+def check_type(
+    value: Any,
+    types: tuple[Type, ...] | Type,
+    variable_name: str
+) -> None:
+    """
+    Checks the value is one of the given types. Otherwise raise a TypeError.
+
+    Args:
+        value: Value to check
+        types: The expected types
+        variable_name: The name of the variable containing the value
+    """
+    if not isinstance(value, types):
+        raise TypeError(
+            f"Invalid type for {variable_name}. Expected"
+            f" {' or '.join(type_.__name__ for type_ in types)},"
+            f" got {type(value).__name__}."
+        )

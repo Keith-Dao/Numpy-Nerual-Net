@@ -7,7 +7,7 @@ from typing import Any, Callable, Type
 import numpy as np
 from numpy.typing import NDArray
 
-from src import activation_functions as act
+from src import activation_functions as act, utils
 
 
 # pylint: disable=too-many-instance-attributes
@@ -61,11 +61,7 @@ class Linear:
 
     @eval.setter
     def eval(self, eval_: bool) -> None:
-        if not isinstance(eval_, bool):
-            raise TypeError(
-                "Invalid type for eval. Expected bool, got"
-                f" {type(eval_).__name__}."
-            )
+        utils.check_type(eval_, bool, "eval")
 
         if eval_ != self._eval:
             self._input = None
@@ -82,11 +78,7 @@ class Linear:
 
     @weight.setter
     def weight(self, new_weight: NDArray) -> None:
-        if not isinstance(new_weight, np.ndarray):
-            raise TypeError(
-                "Invalid type for weight. Expected np.ndarray, got"
-                f" {type(new_weight).__name__}."
-            )
+        utils.check_type(new_weight, np.ndarray, "weight")
 
         if self.weight.shape != new_weight.shape:
             raise ValueError(
@@ -107,11 +99,7 @@ class Linear:
 
     @bias.setter
     def bias(self, new_bias: NDArray) -> None:
-        if not isinstance(new_bias, np.ndarray):
-            raise TypeError(
-                "Invalid type for bias. Expected np.ndarray, got"
-                f" {type(new_bias).__name__}."
-            )
+        utils.check_type(new_bias, np.ndarray, "bias")
 
         if self._bias.shape != new_bias.shape:
             raise ValueError(
@@ -142,11 +130,7 @@ class Linear:
             )
 
         activation: act.ActivationFunction = new_activation()
-        if not isinstance(activation, act.ActivationFunction):
-            raise TypeError(
-                "Invalid class for activation. Expected ActivationFunction,"
-                f" got {type(activation).__name__}."
-            )
+        utils.check_type(activation, act.ActivationFunction, "activation")
 
         self._activation = activation
     # endregion Activation function
@@ -160,11 +144,7 @@ class Linear:
         Args:
             activation_function: The name of the activation function class
         """
-        if not isinstance(activation_function, str):
-            raise TypeError(
-                f"activation_function is of type"
-                f" {type(activation_function).__name__}, expected str."
-            )
+        utils.check_type(activation_function, str, "activation_function")
         try:
             self.activation = getattr(act, activation_function)
         except AttributeError as exc:

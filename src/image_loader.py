@@ -37,11 +37,7 @@ class DatasetIterator:
                 match the batch size
             shuffle: Whether or not to shuffle the data
         """
-        if not isinstance(batch_size, int):
-            raise TypeError(
-                f"batch_size must be an int, got {type(batch_size).__name__}."
-            )
-
+        utils.check_type(batch_size, int, "batch_size")
         if batch_size < 1:
             raise ValueError(
                 f"batch_size must be greater than 1, got {batch_size}."
@@ -129,11 +125,7 @@ class ImageLoader:
             file_formats: File formats to accept
             shuffle: Whether or not to shuffle the dataset before splitting
         """
-        if not isinstance(train_test_split, (int, float)):
-            raise TypeError(
-                "Expected train_test_split to be a number, got"
-                f" {type(train_test_split).__name__}."
-            )
+        utils.check_type(train_test_split, (int, float), "train_test_split")
 
         if not 0 <= train_test_split <= 1:
             raise ValueError(
