@@ -91,6 +91,28 @@ class TestCrossEntropyLoss:
         )
     # endregion Fixtures
 
+    # region Init tests
+    @pytest.mark.parametrize("reduction", [
+        "sum", "mean"
+    ])
+    def test_init(self, reduction):
+        """
+        Test cross-entropy loss init.
+        """
+        loss = CrossEntropyLoss(reduction)
+        assert loss.reduction == reduction
+
+    @pytest.mark.parametrize("reduction", [
+        "test", "Invalid", 1, [], 1.23
+    ])
+    def test_init_with_invalid_reduction(self, reduction):
+        """
+        Test cross-entropy loss init with invalid reductions.
+        """
+        with pytest.raises(ValueError):
+            CrossEntropyLoss(reduction)
+    # endregion Init tests
+
     # region Load tests
     @pytest.mark.parametrize("loss", [
         "sum", "mean"
@@ -112,6 +134,21 @@ class TestCrossEntropyLoss:
         """
         attributes = loss.to_dict()
         attributes["class"] = "test"
+        with pytest.raises(ValueError):
+            CrossEntropyLoss.from_dict(attributes)
+
+    @pytest.mark.parametrize("loss", [
+        "sum", "mean"
+    ], indirect=["loss"])
+    @pytest.mark.parametrize("reduction", [
+        "test", "Invalid", 1, [], 1.23
+    ])
+    def test_from_dict_with_invalid_reduction(self, loss, reduction):
+        """
+        Test the from_dict method with an invalid reduction.
+        """
+        attributes = loss.to_dict()
+        attributes["reduction"] = "test"
         with pytest.raises(ValueError):
             CrossEntropyLoss.from_dict(attributes)
     # endregion Load tests

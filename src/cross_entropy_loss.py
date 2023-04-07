@@ -31,7 +31,31 @@ class CrossEntropyLoss:
         """
         self._probabilities: NDArray | None = None
         self._target: NDArray | None = None
-        self.reduction: str = reduction
+        self._reduction: str = ""
+        self.reduction = reduction
+
+    # region Properties
+    @property
+    def reduction(self) -> str:
+        """
+        The reduction method.
+        """
+        return self._reduction
+
+    @reduction.setter
+    def reduction(self, reduction: str) -> None:
+        print(dir(reduction))
+        if (
+            not isinstance(reduction, Hashable)
+            or reduction not in CrossEntropyLoss.REDUCTIONS
+        ):
+            raise ValueError(
+                "Invalid reduction method. Expected "
+                f"{' or '.join(CrossEntropyLoss.REDUCTIONS.keys())},"
+                f" got {reduction}."
+            )
+        self._reduction = reduction
+    # endregion Properties
 
     # region Load
     @classmethod
