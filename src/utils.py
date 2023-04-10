@@ -5,10 +5,12 @@ from collections.abc import Iterable
 import random
 from typing import Any, Type
 
+import colorama
 import numpy as np
 from numpy.typing import NDArray
 
 
+# region Mathematical functions
 def softmax(in_: NDArray) -> NDArray:
     """
     The softmax function.
@@ -35,8 +37,10 @@ def log_softmax(in_: NDArray) -> NDArray:
     """
     in_ -= np.max(in_, axis=-1, keepdims=True)  # For numerical stability
     return in_ - np.log(np.exp(in_).sum(axis=-1, keepdims=True))
+# endregion Mathematical functions
 
 
+# region Array functions
 def shuffle(data: list | NDArray, inplace: bool = False) -> list | NDArray:
     """
     Shuffles the data.
@@ -72,6 +76,19 @@ def one_hot_encode(labels: list[int], classes: int) -> NDArray:
     rows, cols = zip(*enumerate(labels))
     encoded[rows, cols] = 1
     return encoded
+# endregion Array functions
+
+
+# region Error functions
+def print_warning(message: str) -> None:  # pragma: no cover
+    """
+    Print the provided message as a warning message.
+
+    Args:
+        message: Message to print.
+    """
+    colorama.just_fix_windows_console()
+    print(f"{colorama.Fore.YELLOW}{message}{colorama.Style.RESET_ALL}")
 
 
 def check_type(
@@ -97,3 +114,4 @@ def check_type(
             }"""
             f", got {type(value).__name__}."
         )
+# endregion Error functions

@@ -6,14 +6,14 @@ import pathlib
 import sys
 from typing import Any
 
-import colorama
 import yaml
 
 from src import (
     activation_functions as act,
+    cross_entropy_loss as cel,
     linear,
     model,
-    cross_entropy_loss as cel
+    utils
 )
 
 # region Constants
@@ -30,11 +30,9 @@ class DefaultConfigPathAction(argparse.Action):
     def __call__(self, _, namespace, values, *__):
         if values is None:
             values = DEFAULT_CONFIG_PATH
-            print(
-                f"{colorama.Fore.YELLOW}"
+            utils.print_warning(
                 "Config file path was not provided. Defaulting to"
                 f" {DEFAULT_CONFIG_PATH}."
-                f"{colorama.Style.RESET_ALL}"
             )
         setattr(namespace, self.dest, values)
 
@@ -87,7 +85,7 @@ def get_model(config: dict[str, Any]) -> model.Model:
     or use the default model is none is provided.
 
     Args:
-        config: The values from the config file
+        config: The configuration values from the config file
 
     Returns:
         The loaded model or default model if no model
@@ -121,9 +119,6 @@ def main():
 
     Prompts the user with saving the model.
     """
-    # Set up terminal
-    colorama.just_fix_windows_console()
-
     config = get_config()
     model = get_model(config)
     print(model)
