@@ -2,6 +2,7 @@
 This module tests the image loader module.
 """
 from collections import Counter
+import pathlib
 import shutil
 from typing import Callable
 
@@ -42,10 +43,9 @@ class TestFixtures:
         """
         Creates dummy files in a temporary path.
         """
-        dirs = [
-            tmp_path_factory.mktemp("0", numbered=False),
-            tmp_path_factory.mktemp("1", numbered=False)
-        ]
+        tmp_path_factory.mktemp("0", numbered=False)
+        tmp_path_factory.mktemp("1", numbered=False)
+        tmp_path_factory.mktemp("2", numbered=False)
 
         for i, (x, label) in enumerate(zip(*data)):
             image = Image.fromarray(x)
@@ -54,11 +54,13 @@ class TestFixtures:
             image.save(path)
 
         yield tmp_path_factory.getbasetemp()
-        for dir_ in dirs:
+        for dir_ in tmp_path_factory.getbasetemp().iterdir():
+            if not dir_.is_dir():
+                continue
             shutil.rmtree(str(dir_))
 
     @pytest.fixture(scope="class")
-    def dummy_files(self, dummy_folder):
+    def dummy_files(self, dummy_folder) -> list[pathlib.Path]:
         """
         Gets all the dummy file paths.
         """
@@ -79,11 +81,15 @@ class TestFixtures:
         ]
 
     @pytest.fixture
-    def label_processor(self) -> Callable[[str], int]:
+    def class_to_num(self) -> dict[str, int]:
         """
-        Generic label processor.
+        Dictionary to convert class names to a number.
         """
-        return int
+        return {
+            "0": 0,
+            "1": 1,
+            "2": 2
+        }
 
 
 class TestDatasetIterator(TestFixtures):
@@ -97,7 +103,7 @@ class TestDatasetIterator(TestFixtures):
         self,
         dummy_files,
         preprocessing,
-        label_processor,
+        class_to_num,
         request
     ) -> DatasetIterator:
         """
@@ -107,7 +113,7 @@ class TestDatasetIterator(TestFixtures):
         return DatasetIterator(
             dummy_files,
             preprocessing,
-            label_processor,
+            class_to_num,
             batch_size,
             drop_last=drop_last,
             shuffle=False
@@ -121,7 +127,7 @@ class TestDatasetIterator(TestFixtures):
         self,
         dummy_files,
         preprocessing,
-        label_processor,
+        class_to_num,
         batch_size,
         drop_last
     ):
@@ -131,7 +137,7 @@ class TestDatasetIterator(TestFixtures):
         iterator = DatasetIterator(
             dummy_files,
             preprocessing,
-            label_processor,
+            class_to_num,
             batch_size,
             drop_last=drop_last,
             shuffle=False
@@ -139,7 +145,7 @@ class TestDatasetIterator(TestFixtures):
         assert iterator._data is not dummy_files
         assert iterator._data == dummy_files
         assert iterator._preprocessing == preprocessing
-        assert iterator._label_processor == label_processor
+        assert iterator.class_to_num == class_to_num
         assert iterator._batch_size == batch_size
         assert iterator._drop_last == drop_last
 
@@ -150,7 +156,7 @@ class TestDatasetIterator(TestFixtures):
         self,
         dummy_files,
         preprocessing,
-        label_processor,
+        class_to_num,
         batch_size
     ):
         """
@@ -160,7 +166,7 @@ class TestDatasetIterator(TestFixtures):
             DatasetIterator(
                 dummy_files,
                 preprocessing,
-                label_processor,
+                class_to_num,
                 batch_size
             )
 
@@ -171,7 +177,7 @@ class TestDatasetIterator(TestFixtures):
         self,
         dummy_files,
         preprocessing,
-        label_processor,
+        class_to_num,
         batch_size
     ):
         """
@@ -181,7 +187,7 @@ class TestDatasetIterator(TestFixtures):
             DatasetIterator(
                 dummy_files,
                 preprocessing,
-                label_processor,
+                class_to_num,
                 batch_size
             )
 
@@ -190,7 +196,7 @@ class TestDatasetIterator(TestFixtures):
         self,
         dummy_files,
         preprocessing,
-        label_processor,
+        class_to_num,
         shuffle
     ):
         """
@@ -199,7 +205,7 @@ class TestDatasetIterator(TestFixtures):
         iterator = DatasetIterator(
             dummy_files,
             preprocessing,
-            label_processor,
+            class_to_num,
             1,
             shuffle=shuffle
         )
@@ -210,7 +216,7 @@ class TestDatasetIterator(TestFixtures):
     def test_init_with_invalid_preprocessing(
         self,
         dummy_files,
-        label_processor
+        class_to_num
     ):
         """
         Test init with invalid preprocessing functions.
@@ -221,28 +227,7 @@ class TestDatasetIterator(TestFixtures):
         iterator = DatasetIterator(
             dummy_files,
             [invalid_preprocessing],
-            label_processor,
-            1
-        )
-        # The function return type can only be checked at runtime
-        with pytest.raises(ValueError):
-            next(iterator)
-
-    def test_init_with_invalid_label_processor(
-        self,
-        dummy_files,
-        preprocessing
-    ):
-        """
-        Test init with invalid label_processor function.
-        """
-        def invalid_label_processor(*_) -> str:
-            return "NOT VALID"
-
-        iterator = DatasetIterator(
-            dummy_files,
-            preprocessing,
-            invalid_label_processor,
+            class_to_num,
             1
         )
         # The function return type can only be checked at runtime
@@ -309,7 +294,6 @@ class TestImageLoader(TestFixtures):
         self,
         dummy_folder,
         preprocessing,
-        label_processor,
         request
     ):
         """
@@ -319,7 +303,6 @@ class TestImageLoader(TestFixtures):
         return ImageLoader(
             str(dummy_folder),
             preprocessing,
-            label_processor,
             train_test_split,
             file_formats=[".png"],
             shuffle=False
@@ -331,7 +314,6 @@ class TestImageLoader(TestFixtures):
         self,
         dummy_folder,
         preprocessing,
-        label_processor
     ):
         """
         Test a valid image loader init.
@@ -339,7 +321,6 @@ class TestImageLoader(TestFixtures):
         image_loader = ImageLoader(
             str(dummy_folder),
             preprocessing,
-            label_processor,
             .7,
             file_formats=[".png"],
             shuffle=False
@@ -351,7 +332,8 @@ class TestImageLoader(TestFixtures):
         assert image_loader._train == dummy_files[:2]
         assert image_loader._test == dummy_files[2:]
         assert image_loader._preprocessing == preprocessing
-        assert image_loader._label_processor == label_processor
+        assert image_loader.classes == ["0", "1", "2"]
+        assert image_loader.classes_to_int == {"0": 0, "1": 1, "2": 2}
 
     @pytest.mark.parametrize("split", [
         1.1,
@@ -362,7 +344,6 @@ class TestImageLoader(TestFixtures):
         self,
         dummy_folder,
         preprocessing,
-        label_processor,
         split
     ):
         """
@@ -373,7 +354,6 @@ class TestImageLoader(TestFixtures):
             ImageLoader(
                 str(dummy_folder),
                 preprocessing,
-                label_processor,
                 split,
                 file_formats=[".png"]
             )
@@ -386,7 +366,6 @@ class TestImageLoader(TestFixtures):
         self,
         dummy_folder,
         preprocessing,
-        label_processor,
         split
     ):
         """
@@ -397,7 +376,6 @@ class TestImageLoader(TestFixtures):
             ImageLoader(
                 str(dummy_folder),
                 preprocessing,
-                label_processor,
                 split,
                 file_formats=[".png"]
             )
@@ -406,7 +384,6 @@ class TestImageLoader(TestFixtures):
         self,
         dummy_folder,
         preprocessing,
-        label_processor
     ):
         """
         Test image loader init with shuffle.
@@ -414,7 +391,6 @@ class TestImageLoader(TestFixtures):
         image_loader = ImageLoader(
             str(dummy_folder),
             preprocessing,
-            label_processor,
             1,
             file_formats=[".png"],
             shuffle=True
@@ -428,7 +404,6 @@ class TestImageLoader(TestFixtures):
     def test_init_bad_path(
         self,
         preprocessing,
-        label_processor
     ):
         """
         Test image loader init with a bad path.
@@ -437,7 +412,6 @@ class TestImageLoader(TestFixtures):
             ImageLoader(
                 "testing",
                 preprocessing,
-                label_processor,
                 1,
                 file_formats=[".png"],
                 shuffle=True
@@ -511,18 +485,10 @@ class TestImageLoader(TestFixtures):
 
     # region Classes tests
     @pytest.mark.parametrize("loader", [1], indirect=["loader"])
-    def test_classes(
-        self,
-        loader,
-        data
-    ):
+    def test_classes(self, loader):
         """
         Test the classes property.
         """
-        assert loader._classes == []
-        _, classes = data
-        classes = list(sorted({str(x) for x in classes}))
-        assert loader.classes == classes
-        assert loader._classes == classes
+        classes = ['0', '1', '2']
         assert loader.classes == classes
     # endregion Classes tests

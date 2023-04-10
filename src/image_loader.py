@@ -1,7 +1,6 @@
 """
 This module contains the image loader.
 """
-import itertools
 import pathlib
 from typing import Callable
 
@@ -20,7 +19,7 @@ class DatasetIterator:
         self,
         data: list[pathlib.Path],
         preprocessing: list[Callable[..., NDArray]],
-        label_processor: Callable[[str], int],
+        class_to_num: dict[str, int],
         batch_size: int,
         **kwargs
     ) -> None:
@@ -30,7 +29,7 @@ class DatasetIterator:
         Args:
             data: The data to iterate through
             preprocessing: The preprocessing steps for the data
-            label_processor: The processor for the label into an int
+            class_to_num: Dictionary to convert the class name to a number
             batch_size: The batch size of the iterator
         Keyword args:
             drop_last: Whether or not to drop the last batch if it does not
@@ -46,7 +45,7 @@ class DatasetIterator:
         self._data = data.copy()
         if kwargs.get("shuffle", True):
             self._data = utils.shuffle(self._data, inplace=True)
-        self._label_processor = label_processor
+        self.class_to_num = class_to_num
         self._preprocessing = preprocessing
         self._batch_size = batch_size
         self._i = 0
@@ -75,12 +74,7 @@ class DatasetIterator:
                     "The preprocessing steps must result in a NumPy array."
                 )
 
-            label = self._label_processor(filepath.parent.name)
-            if not isinstance(label, int):
-                raise ValueError(
-                    "The label processor must result in an int."
-                )
-
+            label = self.class_to_num[filepath.parent.name]
             return data, label
 
         steps = min(len(self._data) - self._i, self._batch_size)
@@ -108,7 +102,6 @@ class ImageLoader:
         self,
         folder_path: str,
         preprocessing: list[Callable[..., NDArray]],
-        label_processor: Callable[[str], int],
         train_test_split: float = 1,
         **kwargs
     ) -> None:
@@ -118,7 +111,6 @@ class ImageLoader:
         Args:
             folder_path: Path to the root of the data folder.
             preprocessing: The preprocessing steps for the data
-            label_processor: The processor for the label into an int
             train_test_split: The proportion of data to be used for training.
                                 Must be in the range [0, 1].
         Keyword args:
@@ -152,12 +144,19 @@ class ImageLoader:
         self._test = files[training_size:]
 
         self._preprocessing = preprocessing
-        self._label_processor = label_processor
 
-        self._classes = []
+        self.classes: list[str] = [
+            child.name
+            for child in sorted(path.iterdir())
+            if child.is_dir()
+        ]
+        self.classes_to_int: dict[str, int] = {
+            class_: num
+            for num, class_ in enumerate(self.classes)
+        }
 
     # region Iterator
-    def _get_iter(
+    def get_iter(
         self,
         dataset: str,
         batch_size: int,
@@ -185,35 +184,11 @@ class ImageLoader:
         return DatasetIterator(
             getattr(self, f"_{dataset}"),
             preprocessing=self._preprocessing,
-            label_processor=self._label_processor,
+            class_to_num=self.classes_to_int,
             batch_size=batch_size,
             **kwargs
         )
     # endregion Iterator
-
-    # region Labels
-    @property
-    def classes(self) -> list[str]:
-        """
-        Get all the classes in the dataset.
-
-        NOTE: The classes are not collected until this is first called.
-        However, the classes are stored after so subsequent calls will be
-        faster.
-
-        Returns:
-            All the classes in the dataset.
-        """
-        if self._classes:
-            return self._classes
-
-        classes: set[str] = set()
-        for path in itertools.chain(self._train, self._test):
-            classes.add(path.parent.name)
-        self._classes = list(sorted(classes))
-        return self._classes
-
-    # endregion Labels
 
     # region Built-ins
     def __call__(
@@ -237,7 +212,7 @@ class ImageLoader:
         Returns:
             Dataset iterator.
         """
-        return self._get_iter(
+        return self.get_iter(
             dataset,
             batch_size,
             **kwargs
