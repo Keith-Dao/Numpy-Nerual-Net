@@ -6,6 +6,7 @@ import pathlib
 import sys
 from typing import Any
 
+import colorama
 import yaml
 
 from src import (
@@ -30,8 +31,10 @@ class DefaultConfigPathAction(argparse.Action):
         if values is None:
             values = DEFAULT_CONFIG_PATH
             print(
+                f"{colorama.Fore.YELLOW}"
                 "Config file path was not provided. Defaulting to"
                 f" {DEFAULT_CONFIG_PATH}."
+                f"{colorama.Style.RESET_ALL}"
             )
         setattr(namespace, self.dest, values)
 
@@ -118,6 +121,9 @@ def main():
 
     Prompts the user with saving the model.
     """
+    # Set up terminal
+    colorama.just_fix_windows_console()
+
     config = get_config()
     model = get_model(config)
     print(model)
