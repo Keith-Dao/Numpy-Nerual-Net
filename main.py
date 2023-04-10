@@ -120,7 +120,7 @@ def main():
     """
     config = get_config()
     model = get_model(config)
-    print(model.layers)
+    print(model)
 
 
 if __name__ == "__main__":
