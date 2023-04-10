@@ -4,6 +4,7 @@ This module is the main driver file.
 import argparse
 import pathlib
 import sys
+from typing import Any
 
 import yaml
 
@@ -52,6 +53,23 @@ def get_config_filepath() -> str:
 # endregion Argparse
 
 
+# region Parse config
+def get_config() -> dict[str, Any]:
+    """
+    Get the config values from the config file.
+
+    Returns:
+        A dictionary with the parsed config files.
+    """
+    with open(
+        pathlib.Path(get_config_filepath()),
+        "r",
+        encoding=sys.getdefaultencoding()
+    ) as file:
+        return yaml.safe_load(file)
+# endregion Parse config
+
+
 def main():
     """
     Sets up the environment based on the config file.
@@ -62,12 +80,7 @@ def main():
 
     Prompts the user with saving the model.
     """
-    with open(
-        pathlib.Path(get_config_filepath()),
-        "r",
-        encoding=sys.getdefaultencoding()
-    ) as file:
-        config = yaml.safe_load(file)
+    config = get_config()
     print(config)
 
 
