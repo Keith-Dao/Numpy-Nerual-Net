@@ -244,7 +244,7 @@ class Model:
         if file_path.suffix not in Model.SAVE_METHODS:
             raise ValueError(
                 f"File format {file_path.suffix} not supported."
-                f"Select from {' or '.join(Model.SAVE_METHODS.keys())}."
+                f" Select from {' or '.join(Model.SAVE_METHODS.keys())}."
             )
 
         module, is_binary = Model.SAVE_METHODS[file_path.suffix]

@@ -8,6 +8,13 @@ from typing import Any
 
 import yaml
 
+from src import (
+    activation_functions as act,
+    linear,
+    model,
+    cross_entropy_loss as cel
+)
+
 # region Constants
 DEFAULT_CONFIG_PATH = "config.yaml"
 # endregion Constants
@@ -70,6 +77,37 @@ def get_config() -> dict[str, Any]:
 # endregion Parse config
 
 
+# region Load model
+def get_model(config: dict[str, Any]) -> model.Model:
+    """
+    Loads the model using the file provided in the config,
+    or use the default model is none is provided.
+
+    Args:
+        config: The values from the config file
+
+    Returns:
+        The loaded model or default model if no model
+        file is provided.
+    """
+    model_path = config.get("model_path", None)
+    if model_path is not None:
+        return model.Model.load(model_path)
+
+    # Load the default model
+    layers = [
+        linear.Linear(784, 250, activation=act.ReLU),
+        linear.Linear(250, 250, activation=act.ReLU),
+        linear.Linear(250, 10)
+    ]
+    loss = cel.CrossEntropyLoss()
+    return model.Model(
+        layers,
+        loss
+    )
+# endregion Load model
+
+
 def main():
     """
     Sets up the environment based on the config file.
@@ -81,7 +119,8 @@ def main():
     Prompts the user with saving the model.
     """
     config = get_config()
-    print(config)
+    model = get_model(config)
+    print(model.layers)
 
 
 if __name__ == "__main__":
