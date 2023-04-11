@@ -92,6 +92,38 @@ def image_to_array(image_path: str | pathlib.Path) -> NDArray:
     """
     check_type(image_path, (str, pathlib.Path), "image_path")
     return np.array(Image.open(image_path))
+
+
+def normalise_array(
+    data: NDArray,
+    from_: tuple[float, float],
+    to_: tuple[float, float]
+) -> NDArray:
+    """
+    Normalise the given array from the current range to the new range.
+
+    Args:
+        data: The array to normalise
+        from_: The current range of the data
+        to_: The desired range of the data
+
+    Returns:
+        The data normalised to the new range.
+    """
+    from_min, from_max = from_
+    if from_min >= from_max:
+        raise ValueError(
+            "The first value of from_ must be less than the second value."
+        )
+    to_min, to_max = to_
+    if to_min >= to_max:
+        raise ValueError(
+            "The first value of to_ must be less than the second value."
+        )
+    return (
+        (data - from_min) * (to_max - to_min) / (from_max - from_min)
+        + to_min
+    )
 # endregion Array functions
 
 

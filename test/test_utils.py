@@ -7,9 +7,16 @@ import pathlib
 import numpy as np
 from PIL import Image
 import pytest
-from src import utils
 
-from src.utils import check_type, one_hot_encode, softmax, log_softmax, shuffle
+from src.utils import (
+    check_type,
+    one_hot_encode,
+    softmax,
+    log_softmax,
+    shuffle,
+    image_to_array,
+    normalise_array
+)
 from . import FLOAT_TOLERANCE
 
 
@@ -141,7 +148,7 @@ class TestImageToArray:
         Tests the image to array function.
         """
         assert np.array_equal(
-            utils.image_to_array(image_file),
+            image_to_array(image_file),
             np.arange(100).reshape(10, 10)
         )
 
@@ -153,7 +160,41 @@ class TestImageToArray:
         Tests the image to array function with an invalid type.
         """
         with pytest.raises(TypeError):
-            utils.image_to_array(image_file)
+            image_to_array(image_file)
+
+
+class TestNormaliseArray:
+    """
+    Normalise array tester.
+    """
+    @pytest.mark.parametrize("data, from_, to_, expected", [
+        (np.array([0, 127.5, 255]), (0, 255), (0, 1), np.array([0, 0.5, 1])),
+        (np.array([0, 127.5, 255]), (0, 255), (-1, 1), np.array([-1, 0, 1])),
+        (np.array([0, 127.5, 255]), (0, 255), (-2, 2), np.array([-2, 0, 2])),
+        (np.array([0, 127.5, 255]), (0, 255), (-2, 3), np.array([-2, 0.5, 3])),
+    ])
+    def test_normalise_array(self, data, from_, to_, expected):
+        """
+        Test normalise array.
+        """
+        assert np.array_equal(
+            normalise_array(data, from_, to_),
+            expected
+        )
+
+    @pytest.mark.parametrize("data", [np.array([0, 1, 2])])
+    @pytest.mark.parametrize("from_, to_", [
+        ((255, 0), (0, 1)),
+        ((0, 0), (0, 1)),
+        ((0, 255), (1, -1)),
+        ((0, 255), (-1, -1)),
+    ])
+    def test_normalise_array_invalid_ranges(self, data, from_, to_):
+        """
+        Test normalise array with invalid ranges.
+        """
+        with pytest.raises(ValueError):
+            normalise_array(data, from_, to_)
 
 
 class TestCheckType:
