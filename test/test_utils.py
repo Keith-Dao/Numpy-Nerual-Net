@@ -2,9 +2,12 @@
 This module tests the utils module.
 """
 from collections import Counter
+import pathlib
 
 import numpy as np
+from PIL import Image
 import pytest
+from src import utils
 
 from src.utils import check_type, one_hot_encode, softmax, log_softmax, shuffle
 from . import FLOAT_TOLERANCE
@@ -117,6 +120,40 @@ class TestOneHotEncode:
         Test the one hot encode function.
         """
         assert np.array_equal(one_hot_encode(labels, classes), encoded)
+
+
+class TestImageToArray:
+    """
+    Image to array tester.
+    """
+    @pytest.fixture(scope="class")
+    def image_file(self, tmp_path_factory) -> pathlib.Path:
+        """
+        Dummy image file.
+        """
+        image_data = np.arange(100, dtype=np.uint8).reshape(10, 10)
+        image_path = tmp_path_factory.mktemp("data") / "test.png"
+        Image.fromarray(image_data).save(image_path)
+        return image_path
+
+    def test_image_to_array(self, image_file):
+        """
+        Tests the image to array function.
+        """
+        assert np.array_equal(
+            utils.image_to_array(image_file),
+            np.arange(100).reshape(10, 10)
+        )
+
+    @pytest.mark.parametrize("image_file", [
+        1, 1.23, []
+    ])
+    def test_image_to_array_with_invalid_type(self, image_file):
+        """
+        Tests the image to array function with an invalid type.
+        """
+        with pytest.raises(TypeError):
+            utils.image_to_array(image_file)
 
 
 class TestCheckType:

@@ -104,7 +104,7 @@ class ImageLoader:
         preprocessing: list[Callable[..., NDArray]],
         file_formats: list[str],
         train_test_split: float = 1,
-        ** kwargs
+        **kwargs
     ) -> None:
         """
         Image loader init.

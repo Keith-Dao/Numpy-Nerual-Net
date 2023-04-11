@@ -2,12 +2,14 @@
 This module contains various utility functions.
 """
 from collections.abc import Iterable
+import pathlib
 import random
 from typing import Any, Type
 
 import colorama
 import numpy as np
 from numpy.typing import NDArray
+from PIL import Image
 
 
 # region Mathematical functions
@@ -76,6 +78,20 @@ def one_hot_encode(labels: list[int], classes: int) -> NDArray:
     rows, cols = zip(*enumerate(labels))
     encoded[rows, cols] = 1
     return encoded
+
+
+def image_to_array(image_path: str | pathlib.Path) -> NDArray:
+    """
+    Opens the provided image path and returns it as a NumPy array.
+
+    Args:
+        image_path: The path to the image
+
+    Returns:
+        The NumPy array representation of the image.
+    """
+    check_type(image_path, (str, pathlib.Path), "image_path")
+    return np.array(Image.open(image_path))
 # endregion Array functions
 
 
