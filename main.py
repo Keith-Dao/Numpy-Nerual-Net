@@ -11,6 +11,7 @@ import yaml
 from src import (
     activation_functions as act,
     cross_entropy_loss as cel,
+    image_loader,
     linear,
     model,
     utils
@@ -109,6 +110,82 @@ def get_model(config: dict[str, Any]) -> model.Model:
 # endregion Load model
 
 
+# region Train
+def train_model(model: model.Model, config: dict[str, Any]) -> None:
+    """
+    Train the model based on the config values.
+
+    Args:
+        model: The model to train
+        config: The configuration values from the config file
+    """
+    # Epochs
+    if "epochs" not in config or config["epochs"] == 0:
+        utils.print_warning(
+            "No value for epochs was provided or was 0. Skipping training."
+        )
+        return
+    epochs = config["epochs"]
+    utils.check_type(epochs, int, "epochs")
+    if epochs < 0:
+        raise ValueError("epochs cannot be negative.")
+
+    # Learning rate
+    if "learning_rate" not in config:
+        utils.print_warning(
+            "Value of learning_rate not found, defaulting to 1e-4.")
+    learning_rate = config.get("learning_rate", 1e-4)
+    utils.check_type(learning_rate, float, "learning_rate")
+    if learning_rate <= 0:
+        raise ValueError("learning_rate must be greater than 0.")
+
+    # Batch size
+    if "batch_size" not in config:
+        utils.print_warning("Value of batch_size not found, defaulting to 1.")
+    batch_size = config.get("batch_size", 1)
+    utils.check_type(batch_size, int, "batch_size")
+    if batch_size <= 0:
+        raise ValueError("batch_size must be greater than 0.")
+
+    # Training images
+    if "train_path" not in config:
+        utils.print_warning(
+            "No value for train_path was provided. Skipping training."
+        )
+        return
+    if "train_validation_split" not in config:
+        utils.print_warning(
+            "No value for train_validation_split was provided."
+            " Defaulting to 0.7."
+        )
+    if "file_formats" not in config:
+        utils.print_warning(
+            "No value for file_formats was provided."
+            " Defaulting to only accept .png"
+        )
+    train_validation_split = config.get("train_validation_split", 0.7)
+    file_formats = config.get("file_formats", [".png"])
+
+    loader = image_loader.ImageLoader(
+        config["train_path"],
+        [
+            utils.image_to_array,
+            utils.normalise_image,
+            utils.flatten
+        ],
+        file_formats,
+        train_validation_split,
+    )
+
+    model.train(
+        loader,
+        learning_rate,
+        batch_size,
+        epochs
+    )
+# endregion Train
+
+
 def main():
     """
     Sets up the environment based on the config file.
@@ -121,7 +198,9 @@ def main():
     """
     config = get_config()
     model = get_model(config)
-    print(model)
+    train_model(model, config)
+    print(model.train_history)
+    print(model.validation_history)
 
 
 if __name__ == "__main__":
