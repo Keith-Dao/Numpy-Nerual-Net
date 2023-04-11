@@ -39,6 +39,9 @@ class Linear:
             activation: The activation function class to use
         """
         # Forward pass
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+
         distribution_limit = np.sqrt(1 / in_channels)
         self._weight: NDArray = np.zeros(shape=(out_channels, in_channels))
         self.weight = weight_init(size=(out_channels, in_channels)) \
