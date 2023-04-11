@@ -98,20 +98,21 @@ class TestShuffle:
     """
     Shuffle function tester.
     """
-    @pytest.mark.parametrize("data, equal", [
-        (list(range(10)), lambda a, b: a == b),
-        (np.arange(10), np.array_equal)
+    @pytest.mark.parametrize("data", [
+        list(range(10)),
+        np.arange(10),
     ])
     @pytest.mark.parametrize("inplace", [True, False])
-    def test_shuffle(self, data, equal, inplace):
+    def test_shuffle(self, data, inplace):
         """
         Test the shuffle function.
         """
+        np.random.seed(0)
         data_copy = data.copy()
         shuffled = shuffle(data, inplace=inplace)
-        assert not inplace == equal(data, data_copy), \
+        assert inplace == (data is shuffled), \
             f"Shuffle should be {'' if inplace else 'not '}done inplace"
-        assert not equal(data_copy, shuffled)
+        assert not np.array_equal(data_copy, shuffled)
         assert Counter(data_copy) == Counter(shuffled)
 
 

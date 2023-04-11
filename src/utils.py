@@ -3,7 +3,6 @@ This module contains various utility functions.
 """
 from collections.abc import Iterable
 import pathlib
-import random
 from typing import Any, Type
 
 import colorama
@@ -57,9 +56,7 @@ def shuffle(data: list | NDArray, inplace: bool = False) -> list | NDArray:
     if not inplace:
         data = data.copy()
 
-    for i in range(len(data) - 1, 0, -1):
-        j = random.randint(0, i - 1)
-        data[i], data[j] = data[j], data[i]
+    np.random.shuffle(data)
     return data
 
 
