@@ -8,6 +8,8 @@ import pickle
 from types import ModuleType
 from typing import Any
 
+import matplotlib.pyplot as plt
+import numpy as np
 from numpy.typing import NDArray
 from tqdm import tqdm
 
@@ -412,7 +414,49 @@ class Model:
         self.total_epochs += epochs
     # endregion Train
 
+    # region Visualisation
+    def generate_history_graph(self) -> None:  # pragma: no cover
+        """
+        Generates the model's history data.
+        """
+        train_points = np.linspace(
+            0,
+            self.total_epochs,
+            len(self.train_history)
+        )
+        validation_points = np.linspace(
+            0,
+            self.total_epochs,
+            len(self.validation_history)
+        )
+
+        fig = plt.figure()
+        axis = fig.add_subplot(1, 1, 1)
+        axis.plot(
+            train_points,
+            self.train_history,
+            "-c",
+            label="Training Loss"
+        )
+        axis.plot(
+            validation_points,
+            self.validation_history,
+            "-r",
+            label="Validation Loss"
+        )
+        axis.legend(loc="upper right")
+        axis.set_xlabel("Epoch")
+
+    def display_history_graph(self) -> None:  # pragma: no cover
+        """
+        Generates and displays the model's history graph.
+        """
+        self.generate_history_graph()
+        plt.show()
+    # endregion Visualisation
+
     # region Built-ins
+
     def __call__(self, input_: NDArray) -> NDArray:
         """
         Perform the forward pass.

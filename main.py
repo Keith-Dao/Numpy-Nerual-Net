@@ -199,8 +199,7 @@ def main():
     config = get_config()
     model = get_model(config)
     train_model(model, config)
-    print(model.train_history)
-    print(model.validation_history)
+    model.display_history_graph()
 
 
 if __name__ == "__main__":
