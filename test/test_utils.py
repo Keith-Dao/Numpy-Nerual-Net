@@ -10,6 +10,7 @@ import pytest
 
 from src.utils import (
     check_type,
+    flatten,
     normalise_image,
     one_hot_encode,
     softmax,
@@ -211,6 +212,25 @@ class TestNormaliseImage:
             normalise_image(np.array([0, 127.5, 255])),
             np.array([-1, 0, 1])
         )
+
+
+class TestFlatten:
+    """
+    Flatten tester.
+    """
+    @pytest.mark.parametrize("data, expected", [
+        (np.array([1, 2, 3]), np.array([1, 2, 3])),
+        (np.array([[1], [2], [3]]), np.array([1, 2, 3])),
+        (
+            np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]]),
+            np.array([1, 2, 3, 4, 5, 6, 7, 8])
+        )
+    ])
+    def test_flatten(self, data, expected):
+        """
+        Test flatten.
+        """
+        assert np.array_equal(flatten(data), expected)
 
 
 class TestCheckType:

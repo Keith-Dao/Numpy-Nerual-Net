@@ -137,6 +137,18 @@ def normalise_image(data: NDArray) -> NDArray:
         The image normalised to [-1, 1].
     """
     return normalise_array(data, (0, 255), (-1, 1))
+
+
+def flatten(data: NDArray) -> NDArray:
+    """
+    Flatten the data to a 1D array
+
+    Args;
+        data: Data to flatten
+
+    The flatten data.
+    """
+    return np.ravel(data)
 # endregion Array functions
 
 
