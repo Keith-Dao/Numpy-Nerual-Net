@@ -102,8 +102,9 @@ class ImageLoader:
         self,
         folder_path: str,
         preprocessing: list[Callable[..., NDArray]],
+        file_formats: list[str],
         train_test_split: float = 1,
-        **kwargs
+        ** kwargs
     ) -> None:
         """
         Image loader init.
@@ -111,10 +112,10 @@ class ImageLoader:
         Args:
             folder_path: Path to the root of the data folder.
             preprocessing: The preprocessing steps for the data
+            file_formats: File formats to accept
             train_test_split: The proportion of data to be used for training.
                                 Must be in the range [0, 1].
         Keyword args:
-            file_formats: File formats to accept
             shuffle: Whether or not to shuffle the dataset before splitting
         """
         utils.check_type(train_test_split, (int, float), "train_test_split")
@@ -126,7 +127,6 @@ class ImageLoader:
             )
 
         path: pathlib.Path = pathlib.Path(folder_path)
-        file_formats = kwargs.get("file_formats", [".png"])
         files: list[pathlib.Path] = [
             file_path
             for file_path in path.glob("**/*.*")

@@ -303,8 +303,8 @@ class TestImageLoader(TestFixtures):
         return ImageLoader(
             str(dummy_folder),
             preprocessing,
+            [".png"],
             train_test_split,
-            file_formats=[".png"],
             shuffle=False
         )
     # endregion Fixtures
@@ -321,8 +321,8 @@ class TestImageLoader(TestFixtures):
         image_loader = ImageLoader(
             str(dummy_folder),
             preprocessing,
+            [".png"],
             .7,
-            file_formats=[".png"],
             shuffle=False
         )
 
@@ -354,8 +354,8 @@ class TestImageLoader(TestFixtures):
             ImageLoader(
                 str(dummy_folder),
                 preprocessing,
-                split,
-                file_formats=[".png"]
+                [".png"],
+                split
             )
 
     @pytest.mark.parametrize("split", [
@@ -376,8 +376,8 @@ class TestImageLoader(TestFixtures):
             ImageLoader(
                 str(dummy_folder),
                 preprocessing,
-                split,
-                file_formats=[".png"]
+                [".png"],
+                split
             )
 
     def test_init_shuffle(
@@ -391,8 +391,8 @@ class TestImageLoader(TestFixtures):
         image_loader = ImageLoader(
             str(dummy_folder),
             preprocessing,
+            [".png"],
             1,
-            file_formats=[".png"],
             shuffle=True
         )
 
@@ -412,8 +412,8 @@ class TestImageLoader(TestFixtures):
             ImageLoader(
                 "testing",
                 preprocessing,
+                [".png"],
                 1,
-                file_formats=[".png"],
                 shuffle=True
             )
 
