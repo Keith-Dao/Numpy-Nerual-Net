@@ -124,6 +124,19 @@ def normalise_array(
         (data - from_min) * (to_max - to_min) / (from_max - from_min)
         + to_min
     )
+
+
+def normalise_image(data: NDArray) -> NDArray:
+    """
+    Normalise a standard PIL image array to [-1, 1].
+
+    Args:
+        data: The NumPy array representation of a PIL image
+
+    Returns:
+        The image normalised to [-1, 1].
+    """
+    return normalise_array(data, (0, 255), (-1, 1))
 # endregion Array functions
 
 

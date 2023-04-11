@@ -10,6 +10,7 @@ import pytest
 
 from src.utils import (
     check_type,
+    normalise_image,
     one_hot_encode,
     softmax,
     log_softmax,
@@ -195,6 +196,21 @@ class TestNormaliseArray:
         """
         with pytest.raises(ValueError):
             normalise_array(data, from_, to_)
+
+
+class TestNormaliseImage:
+    """
+    Normalise image tester.
+    """
+
+    def test_normalise_image(self):
+        """
+        Test normalise image.
+        """
+        assert np.array_equal(
+            normalise_image(np.array([0, 127.5, 255])),
+            np.array([-1, 0, 1])
+        )
 
 
 class TestCheckType:
