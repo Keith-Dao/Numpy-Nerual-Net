@@ -22,8 +22,8 @@ class Linear:
         in_channels: int,
         out_channels: int,
         *,
-        weight_init: Callable[..., NDArray] = np.random.normal,
-        bias_init: Callable[..., NDArray] = np.random.normal,
+        weight_init: Callable[..., NDArray] | None = None,
+        bias_init: Callable[..., NDArray] | None = None,
         activation: Type[act.ActivationFunction] = act.NoActivation,
     ) -> None:
         """
@@ -39,10 +39,24 @@ class Linear:
             activation: The activation function class to use
         """
         # Forward pass
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+
+        distribution_limit = np.sqrt(1 / in_channels)
         self._weight: NDArray = np.zeros(shape=(out_channels, in_channels))
-        self.weight = weight_init(size=(out_channels, in_channels))
+        self.weight = weight_init(size=(out_channels, in_channels)) \
+            if weight_init \
+            else np.random.uniform(
+                distribution_limit,
+                -distribution_limit,
+                size=(out_channels, in_channels))
         self._bias: NDArray = np.zeros(shape=(out_channels, ))
-        self.bias = bias_init(size=out_channels)
+        self.bias = bias_init(size=out_channels) \
+            if bias_init \
+            else np.random.uniform(
+                distribution_limit,
+                -distribution_limit,
+                size=out_channels)
         self.activation = activation
         self._eval: bool = False
 

@@ -2,11 +2,23 @@
 This module tests the utils module.
 """
 from collections import Counter
+import pathlib
 
 import numpy as np
+from PIL import Image
 import pytest
 
-from src.utils import check_type, one_hot_encode, softmax, log_softmax, shuffle
+from src.utils import (
+    check_type,
+    flatten,
+    normalise_image,
+    one_hot_encode,
+    softmax,
+    log_softmax,
+    shuffle,
+    image_to_array,
+    normalise_array
+)
 from . import FLOAT_TOLERANCE
 
 
@@ -86,20 +98,21 @@ class TestShuffle:
     """
     Shuffle function tester.
     """
-    @pytest.mark.parametrize("data, equal", [
-        (list(range(10)), lambda a, b: a == b),
-        (np.arange(10), np.array_equal)
+    @pytest.mark.parametrize("data", [
+        list(range(10)),
+        np.arange(10),
     ])
     @pytest.mark.parametrize("inplace", [True, False])
-    def test_shuffle(self, data, equal, inplace):
+    def test_shuffle(self, data, inplace):
         """
         Test the shuffle function.
         """
+        np.random.seed(0)
         data_copy = data.copy()
         shuffled = shuffle(data, inplace=inplace)
-        assert not inplace == equal(data, data_copy), \
+        assert inplace == (data is shuffled), \
             f"Shuffle should be {'' if inplace else 'not '}done inplace"
-        assert not equal(data_copy, shuffled)
+        assert not np.array_equal(data_copy, shuffled)
         assert Counter(data_copy) == Counter(shuffled)
 
 
@@ -117,6 +130,108 @@ class TestOneHotEncode:
         Test the one hot encode function.
         """
         assert np.array_equal(one_hot_encode(labels, classes), encoded)
+
+
+class TestImageToArray:
+    """
+    Image to array tester.
+    """
+    @pytest.fixture(scope="class")
+    def image_file(self, tmp_path_factory) -> pathlib.Path:
+        """
+        Dummy image file.
+        """
+        image_data = np.arange(100, dtype=np.uint8).reshape(10, 10)
+        image_path = tmp_path_factory.mktemp("data") / "test.png"
+        Image.fromarray(image_data).save(image_path)
+        return image_path
+
+    def test_image_to_array(self, image_file):
+        """
+        Tests the image to array function.
+        """
+        assert np.array_equal(
+            image_to_array(image_file),
+            np.arange(100).reshape(10, 10)
+        )
+
+    @pytest.mark.parametrize("image_file", [
+        1, 1.23, []
+    ])
+    def test_image_to_array_with_invalid_type(self, image_file):
+        """
+        Tests the image to array function with an invalid type.
+        """
+        with pytest.raises(TypeError):
+            image_to_array(image_file)
+
+
+class TestNormaliseArray:
+    """
+    Normalise array tester.
+    """
+    @pytest.mark.parametrize("data, from_, to_, expected", [
+        (np.array([0, 127.5, 255]), (0, 255), (0, 1), np.array([0, 0.5, 1])),
+        (np.array([0, 127.5, 255]), (0, 255), (-1, 1), np.array([-1, 0, 1])),
+        (np.array([0, 127.5, 255]), (0, 255), (-2, 2), np.array([-2, 0, 2])),
+        (np.array([0, 127.5, 255]), (0, 255), (-2, 3), np.array([-2, 0.5, 3])),
+    ])
+    def test_normalise_array(self, data, from_, to_, expected):
+        """
+        Test normalise array.
+        """
+        assert np.array_equal(
+            normalise_array(data, from_, to_),
+            expected
+        )
+
+    @pytest.mark.parametrize("data", [np.array([0, 1, 2])])
+    @pytest.mark.parametrize("from_, to_", [
+        ((255, 0), (0, 1)),
+        ((0, 0), (0, 1)),
+        ((0, 255), (1, -1)),
+        ((0, 255), (-1, -1)),
+    ])
+    def test_normalise_array_invalid_ranges(self, data, from_, to_):
+        """
+        Test normalise array with invalid ranges.
+        """
+        with pytest.raises(ValueError):
+            normalise_array(data, from_, to_)
+
+
+class TestNormaliseImage:
+    """
+    Normalise image tester.
+    """
+
+    def test_normalise_image(self):
+        """
+        Test normalise image.
+        """
+        assert np.array_equal(
+            normalise_image(np.array([0, 127.5, 255])),
+            np.array([-1, 0, 1])
+        )
+
+
+class TestFlatten:
+    """
+    Flatten tester.
+    """
+    @pytest.mark.parametrize("data, expected", [
+        (np.array([1, 2, 3]), np.array([1, 2, 3])),
+        (np.array([[1], [2], [3]]), np.array([1, 2, 3])),
+        (
+            np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]]),
+            np.array([1, 2, 3, 4, 5, 6, 7, 8])
+        )
+    ])
+    def test_flatten(self, data, expected):
+        """
+        Test flatten.
+        """
+        assert np.array_equal(flatten(data), expected)
 
 
 class TestCheckType:
