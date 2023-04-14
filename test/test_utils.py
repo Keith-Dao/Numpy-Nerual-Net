@@ -11,6 +11,7 @@ import pytest
 from src.utils import (
     check_type,
     flatten,
+    logits_to_prediction,
     normalise_image,
     one_hot_encode,
     softmax,
@@ -230,6 +231,21 @@ class TestFlatten:
         Test flatten.
         """
         assert np.array_equal(flatten(data), expected)
+
+
+class TestLogitsToPredictions:
+    """
+    Logits to predictions tester.
+    """
+    @pytest.mark.parametrize("logits, expected", [
+        (np.array([1, 2, 3]), [2]),
+        (np.array([[5, 2, 1], [2, 24, 1]]), [0, 1])
+    ])
+    def test_logits_to_predictions(self, logits, expected):
+        """
+        Tests the logits_to_prediction method.
+        """
+        assert logits_to_prediction(logits) == expected
 
 
 class TestCheckType:
