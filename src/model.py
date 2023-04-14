@@ -53,15 +53,7 @@ class Model:
 
         # Metrics
         self.train_metrics = kwargs.get("train_metrics") or []
-
-        validation_metrics = kwargs.get("validation_metrics") or []
-        if isinstance(validation_metrics, dict):
-            self.validation_metrics = validation_metrics
-        else:
-            self.validation_metrics = {
-                metric: []
-                for metric in validation_metrics
-            }
+        self.validation_metrics = kwargs.get("validation_metrics") or []
 
     # region Properties
     # region Evaluation mode
