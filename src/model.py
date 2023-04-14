@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from numpy.typing import NDArray
 from tqdm import tqdm
 
-from src import cross_entropy_loss, image_loader, linear, utils
+from src import cross_entropy_loss, image_loader, linear, metrics, utils
 
 
 # pylint: disable=too-many-instance-attributes
@@ -340,6 +340,35 @@ class Model:
         for layer in self.layers:
             out = layer(out)
         return out
+
+    def get_loss_with_confusion_matrix(
+        self,
+        input_: NDArray,
+        confusion_matrix: NDArray,
+        labels: list[int]
+    ) -> float:
+        """
+        Perform the forward pass and store the predictions to the
+        confusion matrix.
+
+        Args:
+            input_: The input values to the model
+            confusion_matrix: The confusion matrix where the rows
+                represent the predicted class and the columns
+                represent the actual class
+            labels: The ground truth labels for the inputs
+
+        Returns:
+            The loss of the forward pass.
+        """
+        logits = self(input_)
+        metrics.add_to_confusion_matrix(
+            confusion_matrix,
+            utils.logits_to_prediction(logits),
+            labels
+        )
+        return self.loss(logits, labels)
+
     # endregion Forward pass
 
     # region Train
@@ -347,7 +376,8 @@ class Model:
         self,
         data: NDArray,
         labels: list[int],
-        learning_rate: float
+        learning_rate: float,
+        confusion_matrix: NDArray
     ) -> float:
         """
         Perform a training step for one minibatch.
@@ -356,12 +386,18 @@ class Model:
             data: The minibatch data
             labels: The ground truth labels for the inputs
             learning_rate: The learning rate
+            confusion_matrix: The confusion matrix where the rows
+                represent the predicted class and the columns
+                represent the actual class
 
         Returns:
             The output loss.
         """
-        output = self(data)
-        loss = self.loss(output, labels)
+        loss = self.get_loss_with_confusion_matrix(
+            data,
+            confusion_matrix,
+            labels
+        )
         grad = self.loss.backward()
         for layer in reversed(self.layers):
             grad = layer.update(grad, learning_rate)
@@ -383,15 +419,18 @@ class Model:
             batch_size: The batch size
             epochs: The number of epochs to train for
         """
+        num_classes = self.layers[-1].out_channels
         for epoch in range(1, epochs + 1):
             print(f"Epoch {epoch}:")
             # Training
             training_data = data_loader("train", batch_size=batch_size)
+            confusion_matrix = metrics.get_new_confusion_matrix(num_classes)
             total_training_loss = sum(
                 self._train_step(
                     data,
                     labels,
-                    learning_rate
+                    learning_rate,
+                    confusion_matrix
                 )
                 for data, labels in tqdm(training_data, desc="Training")
             )
@@ -406,9 +445,11 @@ class Model:
                 continue
 
             self.eval = True
+            confusion_matrix = metrics.get_new_confusion_matrix(num_classes)
             total_validation_loss = sum(
-                self.loss(
-                    self(data),
+                self.get_loss_with_confusion_matrix(
+                    data,
+                    confusion_matrix,
                     labels
                 )
                 for data, labels in tqdm(validation_data, desc="Validation")
