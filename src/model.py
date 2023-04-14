@@ -158,9 +158,16 @@ class Model:
                 for metric in train_metrics
             }
 
-        if any(key != "loss" for key in self._train_metrics):
+        if any(key != "loss" for key in self.train_metrics):
             raise ValueError(
                 "An invalid metric was provided to train_metrics."
+            )
+        if any(
+            not isinstance(value, list)
+            for value in self.train_metrics.values()
+        ):
+            raise ValueError(
+                "All train metric histories must be a list."
             )
     # endregion Train metrics
 
@@ -188,9 +195,16 @@ class Model:
                 for metric in validation_metrics
             }
 
-        if any(key != "loss" for key in self._validation_metrics):
+        if any(key != "loss" for key in self.validation_metrics):
             raise ValueError(
                 "An invalid metric was provided to validation_metrics."
+            )
+        if any(
+            not isinstance(value, list)
+            for value in self.validation_metrics.values()
+        ):
+            raise ValueError(
+                "All validation metric histories must be a list."
             )
     # endregion Train metrics
     # endregion Properties

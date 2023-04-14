@@ -185,7 +185,7 @@ class TestModel:
     # endregion Fixtures
 
     # region Init tests
-    @ pytest.mark.parametrize("kwargs", [
+    @pytest.mark.parametrize("kwargs", [
         {},
         {"total_epochs": 10},
         {"train_metrics": {"loss": [1, 2, 3]}},
@@ -211,7 +211,7 @@ class TestModel:
         assert model.validation_metrics.get("loss") == \
             kwargs.get("validation_metrics", {}).get("loss")
 
-    @ pytest.mark.parametrize("kwargs, exception", [
+    @pytest.mark.parametrize("kwargs, exception", [
         ({"total_epochs": 1.23}, TypeError),
         ({"total_epochs": []}, TypeError),
         ({"total_epochs": "Test"}, TypeError),
@@ -242,7 +242,7 @@ class TestModel:
         model.eval = True
         check_all_equal(True)
 
-    @ pytest.mark.parametrize("eval_", [
+    @pytest.mark.parametrize("eval_", [
         1, 1.123, [], {}, "True"
     ])
     def test_evaluation_mode_invalid_type(self, model, eval_):
@@ -254,7 +254,7 @@ class TestModel:
     # endregion Evaluation mode tests
 
     # region Layers tests
-    @ pytest.mark.parametrize("layers_", [
+    @pytest.mark.parametrize("layers_", [
         [Linear(1, 2), Linear(2, 3), Linear(3, 5)],
         [Linear(1, 2)]
     ])
@@ -268,7 +268,7 @@ class TestModel:
             for layer, other in zip(model.layers, layers_)
         )
 
-    @ pytest.mark.parametrize("layers_", [
+    @pytest.mark.parametrize("layers_", [
         1, 1.123, {}, "True", True, Linear(1, 2), [[Linear(1, 2)]]
     ])
     def test_layers_invalid_type(self, model, layers_):
@@ -295,7 +295,7 @@ class TestModel:
         model.loss = loss
         assert model.loss is loss
 
-    @ pytest.mark.parametrize("loss_", [
+    @pytest.mark.parametrize("loss_", [
         1, 1.23, [], "Test"
     ])
     def test_loss_with_invalid_type(self, model, loss_):
@@ -307,7 +307,7 @@ class TestModel:
     # endregion Loss tests
 
     # region Total epochs tests
-    @ pytest.mark.parametrize("total_epochs", [
+    @pytest.mark.parametrize("total_epochs", [
         0, 1, 20, 1000
     ])
     def test_total_epochs(self, model, total_epochs):
@@ -317,7 +317,7 @@ class TestModel:
         model.total_epochs = total_epochs
         assert model.total_epochs == total_epochs
 
-    @ pytest.mark.parametrize("total_epochs", [
+    @pytest.mark.parametrize("total_epochs", [
         1.23, [], "Test"
     ])
     def test_total_epochs_with_invalid_type(self, model, total_epochs):
@@ -327,7 +327,7 @@ class TestModel:
         with pytest.raises(TypeError):
             model.total_epochs = total_epochs
 
-    @ pytest.mark.parametrize("total_epochs", [
+    @pytest.mark.parametrize("total_epochs", [
         -1, -100
     ])
     def test_total_epochs_with_negative_numbers(self, model, total_epochs):
@@ -337,10 +337,88 @@ class TestModel:
         with pytest.raises(ValueError):
             model.total_epochs = total_epochs
     # endregion Total epochs tests
+
+    # region Train metrics
+    @pytest.mark.parametrize("train_metrics", [
+        ["loss"],
+        {"loss": []}
+    ])
+    def test_train_metrics(self, model, train_metrics):
+        """
+        Test setting the model's train metrics.
+        """
+        model.train_metrics = train_metrics
+        assert model.train_metrics == {"loss": []}
+
+    @pytest.mark.parametrize("train_metrics", [
+        {"loss": [1, 2, 3, 4]}
+    ])
+    def test_train_metrics_dict(self, model, train_metrics):
+        """
+        Test setting the model's train metrics with a dictionary.
+        """
+        model.train_metrics = train_metrics
+        assert model.train_metrics == train_metrics
+
+    @pytest.mark.parametrize("train_metrics", [
+        {"loss": [1, 2, 3, 4], "invalid": []},
+        {"invalid": []},
+        {"loss": {}},
+        {"loss": 1}
+    ])
+    def test_train_metrics_invalid_metric(self, model, train_metrics):
+        """
+        Test setting the model's train metrics with a dictionary that
+        has an invalid metric.
+        """
+        with pytest.raises(ValueError):
+            model.train_metrics = train_metrics
+    # endregion Train metrics
+
+    # region Validation metrics
+    @pytest.mark.parametrize("validation_metrics", [
+        ["loss"],
+        {"loss": []}
+    ])
+    def test_validation_metrics(self, model, validation_metrics):
+        """
+        Test setting the model's validation metrics.
+        """
+        model.validation_metrics = validation_metrics
+        assert model.validation_metrics == {"loss": []}
+
+    @pytest.mark.parametrize("validation_metrics", [
+        {"loss": [1, 2, 3, 4]}
+    ])
+    def test_validation_metrics_dict(self, model, validation_metrics):
+        """
+        Test setting the model's validation metrics with a dictionary.
+        """
+        model.validation_metrics = validation_metrics
+        assert model.validation_metrics == validation_metrics
+
+    @pytest.mark.parametrize("validation_metrics", [
+        {"loss": [1, 2, 3, 4], "invalid": []},
+        {"invalid": []},
+        {"loss": {}},
+        {"loss": 1}
+    ])
+    def test_validation_metrics_invalid_metric(
+        self,
+        model,
+        validation_metrics
+    ):
+        """
+        Test setting the model's validation metrics with a dictionary that
+        has an invalid metric.
+        """
+        with pytest.raises(ValueError):
+            model.validation_metrics = validation_metrics
+    # endregion Validation metrics
     # endregion Property tests
 
     # region Load tests
-    @ pytest.mark.parametrize("attributes", [
+    @pytest.mark.parametrize("attributes", [
         {},
         {"total_epochs": 10},
         {"train_metrics": {"loss": [1, 2, 3]}},
@@ -387,10 +465,10 @@ class TestModel:
         with pytest.raises(ValueError):
             Model.from_dict(attributes)
 
-    @ pytest.mark.parametrize("file_path", [
+    @pytest.mark.parametrize("file_path", [
         "json_file", "pkl_file"
     ])
-    @ pytest.mark.parametrize("to_string", [True, False])
+    @pytest.mark.parametrize("to_string", [True, False])
     def test_load(self, model, file_path, to_string, request):
         """
         Tests the load method.
@@ -406,7 +484,7 @@ class TestModel:
         assert model.train_metrics == new_model.train_metrics
         assert model.validation_metrics == new_model.validation_metrics
 
-    @ pytest.mark.parametrize("file_path", [
+    @pytest.mark.parametrize("file_path", [
         1, 1.13, [], {}
     ])
     def test_load_invalid_type(self, file_path):
@@ -416,7 +494,7 @@ class TestModel:
         with pytest.raises(TypeError):
             Model.load(file_path)
 
-    @ pytest.mark.parametrize("file_path", [
+    @pytest.mark.parametrize("file_path", [
         "/tmp/test.test",
         pathlib.Path("/tmp/test.test")
     ])
@@ -458,10 +536,10 @@ class TestModel:
             "validation_metrics": {"loss": []}
         }
 
-    @ pytest.mark.parametrize("file_path", [
+    @pytest.mark.parametrize("file_path", [
         "json_file", "pkl_file"
     ])
-    @ pytest.mark.parametrize("to_string", [True, False])
+    @pytest.mark.parametrize("to_string", [True, False])
     def test_save(self, model, file_path, to_string, tmp_path, request):
         """
         Tests the save method.
@@ -477,7 +555,7 @@ class TestModel:
         # Clean up the created file
         pathlib.Path(new_file_path).unlink()
 
-    @ pytest.mark.parametrize("file_path", [
+    @pytest.mark.parametrize("file_path", [
         1, 1.23, []
     ])
     def test_save_with_invalid_type(self, model, file_path):
@@ -487,7 +565,7 @@ class TestModel:
         with pytest.raises(TypeError):
             model.save(file_path)
 
-    @ pytest.mark.parametrize("file_path", [
+    @pytest.mark.parametrize("file_path", [
         "/tmp/test.test",
         pathlib.Path("/tmp/test.test")
     ])
@@ -716,7 +794,7 @@ class TestModel:
     # endregion Backward pass / train tests
 
     # region Built-ins tests
-    @ pytest.mark.parametrize("layers_, loss_, result", [
+    @pytest.mark.parametrize("layers_, loss_, result", [
         # Same
         (
             [
@@ -803,7 +881,7 @@ class TestModel:
         other = Model(layers_, loss_)
         assert (model == other) is result
 
-    @ pytest.mark.parametrize("other", [
+    @pytest.mark.parametrize("other", [
         1,
         1.23,
         -1,
