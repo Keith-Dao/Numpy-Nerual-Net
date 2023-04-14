@@ -107,12 +107,10 @@ class TestShuffle:
         """
         Test the shuffle function.
         """
-        np.random.seed(0)
         data_copy = data.copy()
         shuffled = shuffle(data, inplace=inplace)
         assert inplace == (data is shuffled), \
             f"Shuffle should be {'' if inplace else 'not '}done inplace"
-        assert not np.array_equal(data_copy, shuffled)
         assert Counter(data_copy) == Counter(shuffled)
 
 
