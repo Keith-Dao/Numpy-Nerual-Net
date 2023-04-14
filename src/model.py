@@ -9,7 +9,6 @@ from types import ModuleType
 from typing import Any
 
 import matplotlib.pyplot as plt
-import numpy as np
 from numpy.typing import NDArray
 from tqdm import tqdm
 
@@ -42,34 +41,27 @@ class Model:
 
         Keyword args:
             total_epochs: The total epochs of the model
-            train_history: The training loss history
-            validation_history: The validation loss history
+            train_metrics: The training metrics to store or
+                the training history metrics
+            validation_metrics: The validation metrics to store or
+                the validation history metrics
         """
         self._eval = False
         self.layers = layers
         self.loss = loss
         self.total_epochs = kwargs.get("total_epochs", 0)
-        self.train_history = kwargs.get("train_history", [])
-        self.validation_history = kwargs.get("validation_history", [])
 
-    # region Static methods
-    @staticmethod
-    def calculate_mean_epoch_loss(
-        history: list[float],
-        minibatches: int
-    ) -> float:
-        """
-        Calculate the mean loss for the previous epoch.
+        # Metrics
+        self.train_metrics = kwargs.get("train_metrics") or []
 
-        Args:
-            history: The loss values for the computed minibatches
-            minibatches: The number of minibatches in an epoch
-
-        Returns:
-            The mean epoch loss for the previous epoch.
-        """
-        return sum(history[-minibatches:]) / minibatches
-    # endregion Static methods
+        validation_metrics = kwargs.get("validation_metrics") or []
+        if isinstance(validation_metrics, dict):
+            self.validation_metrics = validation_metrics
+        else:
+            self.validation_metrics = {
+                metric: []
+                for metric in validation_metrics
+            }
 
     # region Properties
     # region Evaluation mode
@@ -146,48 +138,61 @@ class Model:
         self._total_epochs = epochs
     # endregion Total epochs
 
-    # region Train history
+    # region Train metrics
     @property
-    def train_history(self) -> list[float]:
+    def train_metrics(self) -> dict[str, list[float]]:
         """
-        Model's training loss history.
+        The metrics to store when training the model.
         """
-        return self._train_history
+        return self._train_metrics
 
-    @train_history.setter
-    def train_history(self, train_history: list[float]) -> None:
-        utils.check_type(train_history, list, "train_history")
-        if any(not isinstance(loss, (float, int)) for loss in train_history):
-            raise TypeError(
-                "Invalid type for train_history. Expected all list elements to"
-                " be a number."
+    @train_metrics.setter
+    def train_metrics(self, train_metrics) -> None:
+        utils.check_type(train_metrics, (dict, list), "train_metrics")
+
+        if isinstance(train_metrics, dict):
+            self._train_metrics = train_metrics
+        else:
+            self._train_metrics = {
+                metric: []
+                for metric in train_metrics
+            }
+
+        if any(key != "loss" for key in self._train_metrics):
+            raise ValueError(
+                "An invalid metric was provided to train_metrics."
             )
+    # endregion Train metrics
 
-        self._train_history = train_history
-    # endregion Train history
-
-    # region Validation history
+    # region Train metrics
     @property
-    def validation_history(self) -> list[float]:
+    def validation_metrics(self) -> dict[str, list[float]]:
         """
-        Model's validation loss history.
+        The metrics to store when validating the model.
         """
-        return self._validation_history
+        return self._validation_metrics
 
-    @validation_history.setter
-    def validation_history(self, validation_history: list[float]) -> None:
-        utils.check_type(validation_history, list, "validation_history")
-        if any(
-            not isinstance(loss, (float, int))
-            for loss in validation_history
-        ):
-            raise TypeError(
-                "Invalid type for validation_history. Expected all list"
-                " elements to be a number."
+    @validation_metrics.setter
+    def validation_metrics(self, validation_metrics) -> None:
+        utils.check_type(
+            validation_metrics,
+            (dict, list),
+            "validation_metrics"
+        )
+
+        if isinstance(validation_metrics, dict):
+            self._validation_metrics = validation_metrics
+        else:
+            self._validation_metrics = {
+                metric: []
+                for metric in validation_metrics
+            }
+
+        if any(key != "loss" for key in self._validation_metrics):
+            raise ValueError(
+                "An invalid metric was provided to validation_metrics."
             )
-
-        self._validation_history = validation_history
-    # endregion Validation history
+    # endregion Train metrics
     # endregion Properties
 
     # region Load
@@ -266,8 +271,10 @@ class Model:
             - layers -- list of the serialised layers in sequential order
             - loss -- the loss function for the model
             - epochs -- the total number of epochs the model has trained for
-            - train_history -- the training loss history for the model
-            - validation_history -- the validation loss history for the model
+            - train_metrics -- the history of the training metrics for the
+                model
+            - validation_metrics -- the history of the validation metrics for
+                the model
 
         Returns:
             Attributes listed above as a dictionary.
@@ -280,8 +287,8 @@ class Model:
             ],
             "loss": self.loss.to_dict(),
             "epochs": self.total_epochs,
-            "train_history": self.train_history,
-            "validation_history": self.validation_history
+            "train_metrics": self.train_metrics,
+            "validation_metrics": self.validation_metrics
         }
 
     def save(self, save_path: str | pathlib.Path):
@@ -374,20 +381,18 @@ class Model:
             print(f"Epoch {epoch}:")
             # Training
             training_data = data_loader("train", batch_size=batch_size)
-            self.train_history.extend([
+            total_training_loss = sum(
                 self._train_step(
                     data,
                     labels,
                     learning_rate
                 )
-                for data, labels in tqdm(training_data)
-            ])
-            print(f"""Loss: {
-                Model.calculate_mean_epoch_loss(
-                    self.train_history,
-                    len(training_data)
-                )
-            }""")
+                for data, labels in tqdm(training_data, desc="Training")
+            )
+            training_loss = total_training_loss / len(training_data)
+            if "loss" in self.train_metrics:
+                self.train_metrics["loss"].append(training_loss)
+            print(f"""Loss: {training_loss}""")
 
             # Validation
             validation_data = data_loader("test", batch_size=batch_size)
@@ -395,63 +400,64 @@ class Model:
                 continue
 
             self.eval = True
-            self.validation_history.extend([
+            total_validation_loss = sum(
                 self.loss(
                     self(data),
                     labels
                 )
-                for data, labels in validation_data
-            ])
+                for data, labels in tqdm(validation_data, desc="Validation")
+            )
+            validation_loss = total_validation_loss / len(validation_data)
+            if "loss" in self.validation_metrics:
+                self.validation_metrics["loss"].append(validation_loss)
             print(
-                f"""Validation Loss: {
-                    Model.calculate_mean_epoch_loss(
-                        self.validation_history,
-                        len(validation_data)
-                    )
-                }"""
+                f"""Validation Loss: {validation_loss}"""
             )
             self.eval = False
         self.total_epochs += epochs
     # endregion Train
 
     # region Visualisation
-    def generate_history_graph(self) -> None:  # pragma: no cover
+    def generate_history_graph(self, metric: str) -> None:  # pragma: no cover
         """
         Generates the model's history data.
+
+        Args:
+            metric: The metric to generate a history graph for
         """
-        train_points = np.linspace(
-            0,
-            self.total_epochs,
-            len(self.train_history)
-        )
-        validation_points = np.linspace(
-            0,
-            self.total_epochs,
-            len(self.validation_history)
-        )
+        if (
+            metric not in self.train_metrics
+            and metric not in self.validation_metrics
+        ):
+            raise ValueError("Invalid metric.")
 
         fig = plt.figure()
         axis = fig.add_subplot(1, 1, 1)
-        axis.plot(
-            train_points,
-            self.train_history,
-            "-c",
-            label="Training Loss"
-        )
-        axis.plot(
-            validation_points,
-            self.validation_history,
-            "-r",
-            label="Validation Loss"
-        )
+
+        if metric in self.train_metrics:
+            axis.plot(
+                self.train_metrics[metric],
+                "-c",
+                label="Training Loss"
+            )
+        if metric in self.validation_metrics:
+            axis.plot(
+                self.validation_metrics[metric],
+                "-r",
+                label="Validation Loss"
+            )
+
         axis.legend(loc="upper right")
         axis.set_xlabel("Epoch")
 
-    def display_history_graph(self) -> None:  # pragma: no cover
+    def display_history_graph(self, metric: str) -> None:  # pragma: no cover
         """
         Generates and displays the model's history graph.
+
+        Args:
+            metric: The metric to generate a history graph for
         """
-        self.generate_history_graph()
+        self.generate_history_graph(metric)
         plt.show()
     # endregion Visualisation
 

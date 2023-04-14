@@ -105,7 +105,9 @@ def get_model(config: dict[str, Any]) -> model.Model:
     loss = cel.CrossEntropyLoss()
     return model.Model(
         layers,
-        loss
+        loss,
+        train_metrics=config.get("train_metrics"),
+        validation_metrics=config.get("validation_metrics")
     )
 # endregion Load model
 
@@ -224,7 +226,7 @@ def main():
     config = get_config()
     model = get_model(config)
     train_model(model, config)
-    model.display_history_graph()
+    model.display_history_graph("loss")
 
 
 if __name__ == "__main__":

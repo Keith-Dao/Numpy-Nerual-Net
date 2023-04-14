@@ -66,7 +66,12 @@ class TestModel:
         Returns:
             The model.
         """
-        return Model(layers, loss)
+        return Model(
+            layers,
+            loss,
+            train_metrics=["loss"],
+            validation_metrics=["loss"]
+        )
 
     @pytest.fixture(scope="class")
     def json_file(self, tmp_path_factory):
@@ -78,7 +83,7 @@ class TestModel:
         """
         file_path = tmp_path_factory.getbasetemp() / "true_model.json"
         with open(file_path, "w", encoding="UTF-8") as file:
-            file.write('{"class": "Model", "layers": [{"class": "Linear", "weight": [[1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0]], "bias": [1.0, 1.0, 1.0], "activation_function": "NoActivation"}, {"class": "Linear", "weight": [[1.0, 1.0, 1.0], [1.0, 1.0, 1.0]], "bias": [1.0, 1.0], "activation_function": "ReLU"}], "loss": {"class": "CrossEntropyLoss", "reduction": "sum"}, "epochs": 0, "train_history": [], "validation_history": []}')  # noqa: E501
+            file.write('{"class": "Model", "layers": [{"class": "Linear", "weight": [[1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0]], "bias": [1.0, 1.0, 1.0], "activation_function": "NoActivation"}, {"class": "Linear", "weight": [[1.0, 1.0, 1.0], [1.0, 1.0, 1.0]], "bias": [1.0, 1.0], "activation_function": "ReLU"}], "loss": {"class": "CrossEntropyLoss", "reduction": "sum"}, "epochs": 0, "train_metrics": {"loss": []}, "validation_metrics": {"loss": []}}')  # noqa: E501
         return file_path
 
     @pytest.fixture(scope="class")
@@ -91,7 +96,7 @@ class TestModel:
         """
         file_path = tmp_path_factory.getbasetemp() / "true_model.pkl"
         with open(file_path, "wb") as file:
-            file.write(b'\x80\x04\x95\xd4\x01\x00\x00\x00\x00\x00\x00}\x94(\x8c\x05class\x94\x8c\x05Model\x94\x8c\x06layers\x94]\x94(}\x94(h\x01\x8c\x06Linear\x94\x8c\x06weight\x94]\x94(]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00e]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00e]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00ee\x8c\x04bias\x94]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00e\x8c\x13activation_function\x94\x8c\x0cNoActivation\x94u}\x94(h\x01h\x06h\x07]\x94(]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00e]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00eeh\x0c]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00eh\x0e\x8c\x04ReLU\x94ue\x8c\x04loss\x94}\x94(h\x01\x8c\x10CrossEntropyLoss\x94\x8c\treduction\x94\x8c\x03sum\x94u\x8c\x06epochs\x94K\x00\x8c\rtrain_history\x94]\x94\x8c\x12validation_history\x94]\x94u.')  # noqa: E501
+            file.write(b'\x80\x04\x95\xde\x01\x00\x00\x00\x00\x00\x00}\x94(\x8c\x05class\x94\x8c\x05Model\x94\x8c\x06layers\x94]\x94(}\x94(h\x01\x8c\x06Linear\x94\x8c\x06weight\x94]\x94(]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00e]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00e]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00ee\x8c\x04bias\x94]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00e\x8c\x13activation_function\x94\x8c\x0cNoActivation\x94u}\x94(h\x01h\x06h\x07]\x94(]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00e]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00eeh\x0c]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00eh\x0e\x8c\x04ReLU\x94ue\x8c\x04loss\x94}\x94(h\x01\x8c\x10CrossEntropyLoss\x94\x8c\treduction\x94\x8c\x03sum\x94u\x8c\x06epochs\x94K\x00\x8c\rtrain_metrics\x94}\x94h\x16]\x94s\x8c\x12validation_metrics\x94}\x94h\x16]\x94su.')  # noqa: E501
         return file_path
 
     @pytest.fixture
@@ -183,12 +188,12 @@ class TestModel:
     @ pytest.mark.parametrize("kwargs", [
         {},
         {"total_epochs": 10},
-        {"train_history": [1, 2, 3]},
-        {"validation_history": [1, 2, 3]},
+        {"train_metrics": {"loss": [1, 2, 3]}},
+        {"validation_metrics": {"loss": [1, 2, 3]}},
         {
             "total_epochs": 20,
-            "train_history": [1, 2, 3],
-            "validation_history": [1, 2, 3]
+            "train_metrics": {"loss": [1, 2, 3]},
+            "validation_metrics": {"loss": [1, 2, 3]}
         }
     ])
     def test_init(self, layers, loss, kwargs):
@@ -201,25 +206,17 @@ class TestModel:
         assert model.loss is loss
         assert model.eval is False
         assert model.total_epochs == kwargs.get("total_epochs", 0)
-        assert model.train_history == kwargs.get("train_history", [])
-        assert model.validation_history == kwargs.get("validation_history", [])
+        assert model.train_metrics.get("loss") == \
+            kwargs.get("train_metrics", {}).get("loss")
+        assert model.validation_metrics.get("loss") == \
+            kwargs.get("validation_metrics", {}).get("loss")
 
     @ pytest.mark.parametrize("kwargs, exception", [
         ({"total_epochs": 1.23}, TypeError),
         ({"total_epochs": []}, TypeError),
         ({"total_epochs": "Test"}, TypeError),
         ({"total_epochs": -1}, ValueError),
-        ({"total_epochs": -100}, ValueError),
-        ({"train_history": 1}, TypeError),
-        ({"train_history": 1.23}, TypeError),
-        ({"train_history": "test"}, TypeError),
-        ({"train_history": [[1, -32, 3.2]]}, TypeError),
-        ({"train_history": ["1", "2"]}, TypeError),
-        ({"validation_history": 1}, TypeError),
-        ({"validation_history": 1.23}, TypeError),
-        ({"validation_history": "test"}, TypeError),
-        ({"validation_history": [[1, -32, 3.2]]}, TypeError),
-        ({"validation_history": ["1", "2"]}, TypeError),
+        ({"total_epochs": -100}, ValueError)
     ])
     def test_init_with_invalid_values(self, layers, loss, kwargs, exception):
         """
@@ -228,31 +225,6 @@ class TestModel:
         with pytest.raises(exception):
             Model(layers, loss, **kwargs)
     # endregion Init tests
-
-    # region Static method tests
-
-    @ pytest.mark.parametrize("history, minibatches, expected_result", [
-        ([1, 2, 3], 3, 2),
-        ([1, 2, 3], 2, 2.5),
-        ([1, 2, 3], 1, 3),
-        ([5, 2, 4, -2], 2, 1),
-        ([5, -2, 4, -2], 3, 0)
-    ])
-    def test_calculate_mean_epoch_loss(
-        self,
-        history,
-        minibatches,
-        expected_result
-    ):
-        """
-        Test the calculate_mean_epoch_loss method.
-        """
-        assert math.isclose(
-            Model.calculate_mean_epoch_loss(history, minibatches),
-            expected_result,
-            abs_tol=FLOAT_TOLERANCE
-        )
-    # endregion Static method tests
 
     # region Property tests
     # region Evaluation mode tests
@@ -365,84 +337,28 @@ class TestModel:
         with pytest.raises(ValueError):
             model.total_epochs = total_epochs
     # endregion Total epochs tests
-
-    # region Train history tests
-    @ pytest.mark.parametrize("train_history", [
-        [1, 32, 42],
-        [],
-        [32.2, -32, 3]
-    ])
-    def test_train_history(self, model, train_history):
-        """
-        Test setting the model's train history.
-        """
-        model.train_history = train_history
-        assert model.train_history == train_history
-
-    @ pytest.mark.parametrize("train_history", [
-        1,
-        1.23,
-        "test",
-        [[1, -32, 3.2]],
-        ["1", "2"]
-    ])
-    def test_train_history_with_invalid_type(self, model, train_history):
-        """
-        Test setting the model's train history with invalid type.
-        """
-        with pytest.raises(TypeError):
-            model.train_history = train_history
-    # endregion Train history tests
-
-    # region Validation history tests
-    @ pytest.mark.parametrize("validation_history", [
-        [1, 32, 42],
-        [],
-        [32.2, -32, 3]
-    ])
-    def test_validation_history(self, model, validation_history):
-        """
-        Test setting the model's validation history.
-        """
-        model.validation_history = validation_history
-        assert model.validation_history == validation_history
-
-    @ pytest.mark.parametrize("validation_history", [
-        1,
-        1.23,
-        "test",
-        [[1, -32, 3.2]],
-        ["1", "2"]
-    ])
-    def test_validation_history_with_invalid_type(
-        self,
-        model,
-        validation_history
-    ):
-        """
-        Test setting the model's validation history with invalid type.
-        """
-        with pytest.raises(TypeError):
-            model.validation_history = validation_history
-    # endregion Validation history tests
     # endregion Property tests
 
     # region Load tests
     @ pytest.mark.parametrize("attributes", [
         {},
         {"total_epochs": 10},
-        {"train_history": [1, 2, 3]},
-        {"validation_history": [1, 2, 3]},
+        {"train_metrics": {"loss": [1, 2, 3]}},
+        {"validation_metrics": {"loss": [1, 2, 3]}},
         {
             "total_epochs": 10,
-            "train_history": [1, 2, 3],
-            "validation_history": [1, 2, 3]
+            "train_metrics": {"loss": [1, 2, 3]},
+            "validation_metrics": {"loss": [1, 2, 3]}
         },
     ])
     def test_from_dict(self, model, attributes):
         """
         Tests from_dict method.
         """
+        for key in ["train_metrics", "validation_metrics"]:
+            if key not in attributes:
+                attributes[key] = ["loss"]
+
         for attribute, value in attributes.items():
             setattr(model, attribute, value)
 
@@ -455,8 +371,8 @@ class TestModel:
         assert model.layers == new_model.layers
         assert model.loss == new_model.loss
         assert model.total_epochs == new_model.total_epochs
-        assert model.train_history == new_model.train_history
-        assert model.validation_history == new_model.validation_history
+        assert model.train_metrics == new_model.train_metrics
+        assert model.validation_metrics == new_model.validation_metrics
 
     def test_from_dict_with_invalid_class_name(self, model):
         """
@@ -487,8 +403,8 @@ class TestModel:
         assert model.layers == new_model.layers
         assert model.loss == new_model.loss
         assert model.total_epochs == new_model.total_epochs
-        assert model.train_history == new_model.train_history
-        assert model.validation_history == new_model.validation_history
+        assert model.train_metrics == new_model.train_metrics
+        assert model.validation_metrics == new_model.validation_metrics
 
     @ pytest.mark.parametrize("file_path", [
         1, 1.13, [], {}
@@ -538,8 +454,8 @@ class TestModel:
             ],
             "loss": {"class": "CrossEntropyLoss", "reduction": "sum"},
             "epochs": 0,
-            "train_history": [],
-            "validation_history": []
+            "train_metrics": {"loss": []},
+            "validation_metrics": {"loss": []}
         }
 
     @ pytest.mark.parametrize("file_path", [
@@ -618,22 +534,13 @@ class TestModel:
         assert all(
             math.isclose(x, y, abs_tol=FLOAT_TOLERANCE)
             for x, y in zip(
-                model.train_history,
+                model.train_metrics["loss"],
                 [
-                    0.6931471805599453,
-                    0.7064849592415489,
-                    0.6809533903573027,
-                    0.6930971542052906,
-                    0.6262611634252911,
-                    0.8183061861646324,
-                    0.6931471805599453,
-                    0.6931471805599453,
-                    0.6380195021075894,
-                    0.6932850372585229
+                    0.6935848934440013
                 ]
             )
         )
-        assert model.validation_history == []
+        assert model.validation_metrics["loss"] == []
         assert np.allclose(
             model.layers[0].weight,
             np.array([[0.99999876, 1.0000021,  1.00000052, 0.99999819],
@@ -669,23 +576,17 @@ class TestModel:
         assert all(
             math.isclose(x, y, abs_tol=FLOAT_TOLERANCE)
             for x, y in zip(
-                model.train_history,
+                model.train_metrics["loss"],
                 [
-                    0.6931471805599453,
-                    0.7064849592415489,
-                    0.6809533903573027,
-                    0.6930971542052906,
-                    0.6262611634252911,
-                    0.8183061861646324,
-                    0.6931471805599453
+                    0.7016281735019937
                 ]
             )
         )
         assert all(
             math.isclose(x, y, abs_tol=FLOAT_TOLERANCE)
             for x, y in zip(
-                model.validation_history,
-                [0.6931471805599453, 0.6380195021075894, 0.6932378476943687]
+                model.validation_metrics["loss"],
+                [0.6748015101206345]
             )
         )
         assert np.allclose(
@@ -727,47 +628,15 @@ class TestModel:
         assert all(
             math.isclose(x, y, abs_tol=FLOAT_TOLERANCE)
             for x, y in zip(
-                model.train_history,
-                [
-                    0.6931471805599453,
-                    0.7064849592415489,
-                    0.6809533903573027,
-                    0.6930971542052906,
-                    0.6262611634252945,
-                    0.8183061861646324,
-                    0.6931471805599453,
-                    0.721964285866928,
-                    0.6680617110920183,
-                    0.596464889964369,
-                    0.6930142081547784,
-                    0.581318279730699,
-                    0.8796890826796818,
-                    0.6931471805599453,
-                    0.7456241202965298,
-                    0.6383687106193249,
-                    0.5345381008115466,
-                    0.6929423330716423,
-                    0.5470199182330638,
-                    0.9309717222259597,
-                    0.6931471805599453
-                ]
+                model.train_metrics["loss"],
+                [0.7016281735019942, 0.6905228054354886, 0.6832302979740018]
             )
         )
         assert all(
             math.isclose(x, y, abs_tol=FLOAT_TOLERANCE)
             for x, y in zip(
-                model.validation_history,
-                [
-                    0.6931471805599453,
-                    0.6380195021075894,
-                    0.6932378476943687,
-                    0.6931471805599453,
-                    0.5961888365020174,
-                    0.6933155304522359,
-                    0.6931471805599453,
-                    0.5640724625404642,
-                    0.6933828977003443
-                ]
+                model.validation_metrics["loss"],
+                [0.6748015101206345, 0.6608838491713995, 0.6502008469335846]
             )
         )
         assert np.allclose(
@@ -810,14 +679,14 @@ class TestModel:
         assert all(
             math.isclose(x, y, abs_tol=FLOAT_TOLERANCE)
             for x, y in zip(
-                model.train_history,
-                [2.0794415416798357, 2.09358137165225, 0.6931471805599453]
+                model.train_metrics["loss"],
+                [1.62205669796401]
             )
         )
         assert all(
             math.isclose(x, y, abs_tol=FLOAT_TOLERANCE)
             for x, y in zip(
-                model.validation_history,
+                model.validation_metrics["loss"],
                 [2.02241995571785]
             )
         )
