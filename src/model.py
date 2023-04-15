@@ -508,34 +508,51 @@ class Model:
             classes: The classes in the same order as the confusion matrix
         """
         metrics_ = getattr(self, f"{metric_type}_metrics")
-        headers = ["Class"]
-        tabulated_data = [classes]
+        multiclass_headers, multiclass_data = ["Class"], [classes]
+        singular_headers, singular_data = [], []
+
         for metric in metrics_:
             if metric in metrics.SINGLE_VALUE_METRICS:
-                print(f"{metric.capitalize()}: {metrics_[metric][-1]:.4f}")
+                headers = singular_headers
+                data = singular_data
             else:
-                headers.append(metric.capitalize())
-                tabulated_data.append(metrics_[metric][-1])
+                headers = multiclass_headers
+                data = multiclass_data
 
-        if len(headers) > 1:
-            tabulated_data = list(zip(*tabulated_data))
-            print(tabulate(tabulated_data, headers=headers, floatfmt=".4f"))
+            headers.append(" ".join(metric.split("_")).capitalize())
+            data.append(metrics_[metric][-1])
+
+        float_format = ".4f"
+        if singular_headers:
+            print(tabulate(
+                [singular_data],
+                headers=singular_headers,
+                floatfmt=float_format
+            ))
+            print()
+
+        if len(multiclass_headers) > 1:
+            multiclass_data = list(zip(*multiclass_data))
+            print(tabulate(
+                multiclass_data,
+                headers=multiclass_headers,
+                floatfmt=float_format
+            ))
+            print()
     # endregion Metrics
 
     # region Visualisation
-    def generate_history_graph(self, metric: str) -> None:  # pragma: no cover
+    def _generate_history_graph(self, metric: str) -> None:  # pragma: no cover
         """
         Generates the model's history data.
 
         Args:
             metric: The metric to generate a history graph for
         """
-        if (
-            metric not in self.train_metrics
-            and metric not in self.validation_metrics
-        ):
-            raise ValueError("Invalid metric.")
+        if metric not in metrics.SINGLE_VALUE_METRICS:
+            return
 
+        metric_name = " ".join(metric.split("_")).capitalize()
         fig = plt.figure()
         axis = fig.add_subplot(1, 1, 1)
 
@@ -543,26 +560,28 @@ class Model:
             axis.plot(
                 self.train_metrics[metric],
                 "-c",
-                label="Training Loss"
+                label=f"Training {metric_name}"
             )
         if metric in self.validation_metrics:
             axis.plot(
                 self.validation_metrics[metric],
                 "-r",
-                label="Validation Loss"
+                label=f"Validation {metric_name}"
             )
 
         axis.legend(loc="upper right")
         axis.set_xlabel("Epoch")
+        axis.set_xticks(range(self.total_epochs))
 
-    def display_history_graph(self, metric: str) -> None:  # pragma: no cover
+    def display_history_graphs(self) -> None:  # pragma: no cover
         """
-        Generates and displays the model's history graph.
-
-        Args:
-            metric: The metric to generate a history graph for
+        Generates and displays the model's history graphs.
         """
-        self.generate_history_graph(metric)
+        for metric in (
+            set(self.train_metrics.keys())
+            | set(self.validation_metrics.keys())
+        ):
+            self._generate_history_graph(metric)
         plt.show()
     # endregion Visualisation
 

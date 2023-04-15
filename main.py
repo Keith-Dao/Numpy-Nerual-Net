@@ -226,7 +226,7 @@ def main():
     config = get_config()
     model = get_model(config)
     train_model(model, config)
-    model.display_history_graph("loss")
+    model.display_history_graphs()
 
 
 if __name__ == "__main__":
