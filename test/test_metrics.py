@@ -8,6 +8,7 @@ import pytest
 
 from src.metrics import (
     accuracy,
+    f1_score,
     get_new_confusion_matrix,
     add_to_confusion_matrix,
     precision,
@@ -153,6 +154,46 @@ class TestRecall:
         """
         assert np.allclose(
             recall(confusion_matrix),
+            expected,
+            atol=FLOAT_TOLERANCE
+        )
+
+
+class TestF1Score:
+    """
+    F1 score tester.
+    """
+    @pytest.mark.parametrize("confusion_matrix, expected", [
+        (np.array([[3, 2], [1, 4]]), [0.66666667, 0.72727273]),
+        (
+            np.array([[4, 4, 2], [0, 2, 0], [3, 2, 5]]),
+            [0.47058824, 0.4, 0.58823529]
+        ),
+        (
+            np.array([[20, 1, 60], [29, 13, 2], [32, 6, 34]]),
+            [0.24691358, 0.40625, 0.4047619]
+        ),
+        (
+            np.array([
+                [50, 3, 0, 0],
+                [26, 8, 0, 1],
+                [20, 2, 4, 0],
+                [12, 0, 0, 1]
+            ]),
+            [
+                0.6211180124223602,
+                0.3333333333333333,
+                0.2666666666666667,
+                0.13333333333333336
+            ]
+        )
+    ])
+    def test_f1_score(self, confusion_matrix, expected):
+        """
+        Tests f1_score.
+        """
+        assert np.allclose(
+            f1_score(confusion_matrix),
             expected,
             atol=FLOAT_TOLERANCE
         )

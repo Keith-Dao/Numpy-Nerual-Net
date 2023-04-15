@@ -354,7 +354,8 @@ class TestModel:
         {"loss": [1, 2, 3, 4]},
         {"accuracy": []},
         {"precision": []},
-        {"recall": []}
+        {"recall": []},
+        {"f1_score": []}
     ])
     def test_train_metrics_dict(self, model, train_metrics):
         """
@@ -394,7 +395,8 @@ class TestModel:
         {"loss": [1, 2, 3, 4]},
         {"accuracy": []},
         {"precision": []},
-        {"recall": []}
+        {"recall": []},
+        {"f1_score": []}
     ])
     def test_validation_metrics_dict(self, model, validation_metrics):
         """

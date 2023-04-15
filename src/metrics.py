@@ -72,7 +72,7 @@ def precision(confusion_matrix: NDArray) -> NDArray:
     return confusion_matrix.diagonal() / confusion_matrix.sum(axis=1)
 
 
-def recall(confusion_matrix: NDArray) -> float:
+def recall(confusion_matrix: NDArray) -> NDArray:
     """
     The recall for all classes in the confusion matrix.
 
@@ -83,4 +83,19 @@ def recall(confusion_matrix: NDArray) -> float:
         The recall.
     """
     return confusion_matrix.diagonal() / confusion_matrix.sum(axis=0)
+
+
+def f1_score(confusion_matrix: NDArray) -> NDArray:
+    """
+    The f1 score for all classes in the confusion matrix.
+
+    Args:
+        confusion_matrix: The confusion matrix
+
+    Returns:
+        The f1 scores.
+    """
+    precision_ = precision(confusion_matrix)
+    recall_ = recall(confusion_matrix)
+    return 2 * precision_ * recall_ / (precision_ + recall_)
 # endregion Metrics
