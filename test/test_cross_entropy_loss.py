@@ -299,7 +299,7 @@ class TestCrossEntropyLoss:
         loss(logits, labels)
         assert np.allclose(loss.backward(), grad, atol=FLOAT_TOLERANCE)
 
-    @ pytest.mark.parametrize("loss, data", [
+    @pytest.mark.parametrize("loss, data", [
         ("mean", "data_small_close"),
         ("mean", "data_small_exact"),
         ("mean", "data_small_far"),
@@ -320,7 +320,7 @@ class TestCrossEntropyLoss:
     # endregion Backward pass tests
 
     # region Built-ins tests
-    @ pytest.mark.parametrize("loss, other, result", [
+    @pytest.mark.parametrize("loss, other, result", [
         ("sum", CrossEntropyLoss("sum"), True),
         ("sum", CrossEntropyLoss("mean"), False),
         ("sum", {"reduction": "sum"}, False),

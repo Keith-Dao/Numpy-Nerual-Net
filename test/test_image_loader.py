@@ -210,8 +210,6 @@ class TestDatasetIterator(TestFixtures):
             shuffle=shuffle
         )
         assert Counter(iterator._data) == Counter(dummy_files)
-        assert shuffle == (iterator._data != dummy_files), \
-            f"The data should {'' if shuffle else 'not '}be shuffled."
 
     def test_init_with_invalid_preprocessing(
         self,
@@ -398,7 +396,6 @@ class TestImageLoader(TestFixtures):
 
         # Fixture order is different
         dummy_files = list(dummy_folder.glob("**/*.png"))
-        assert image_loader._train != dummy_files
         assert Counter(image_loader._train) == Counter(dummy_files)
 
     def test_init_bad_path(

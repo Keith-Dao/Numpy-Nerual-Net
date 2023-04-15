@@ -115,3 +115,29 @@ model_path: # Model load path
 - The path to the saved model attributes to load
 - Can be a relative or absolute path
 - Optional, defaults to untrained model
+
+### 2.4. Metrics
+
+Valid metrics include (**NOTE**: the selected metrics must exactly match below):
+
+- loss
+- accuracy
+- precision
+- recall
+- f1_score
+
+---
+
+**train_metrics**: list[str]
+
+- Metrics to track during training
+- Only accepts the valid metrics listed above
+- Optional, defaults to no metrics if none are provided
+
+---
+
+**validation_metrics**: list[str]
+
+- Metrics to track during validation
+- Only accepts the valid metrics listed above
+- Optional, defaults to no metrics if none are provided

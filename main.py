@@ -105,68 +105,52 @@ def get_model(config: dict[str, Any]) -> model.Model:
     loss = cel.CrossEntropyLoss()
     return model.Model(
         layers,
-        loss
+        loss,
+        train_metrics=config.get("train_metrics"),
+        validation_metrics=config.get("validation_metrics")
     )
 # endregion Load model
 
 
-# region Train
-def train_model(model: model.Model, config: dict[str, Any]) -> None:
+# region Load image loader
+def get_image_loader(
+    config: dict[str, Any]
+) -> image_loader.ImageLoader | None:
     """
-    Train the model based on the config values.
+    Creates an image loader.
 
     Args:
-        model: The model to train
         config: The configuration values from the config file
+
+    Returns:
+        An image loader for the training data, if the data is provided.
+        Else, None is returned.
     """
-    # Epochs
-    if "epochs" not in config or config["epochs"] == 0:
-        utils.print_warning(
-            "No value for epochs was provided or was 0. Skipping training."
-        )
-        return
-    epochs = config["epochs"]
-    utils.check_type(epochs, int, "epochs")
-    if epochs < 0:
-        raise ValueError("epochs cannot be negative.")
-
-    # Learning rate
-    if "learning_rate" not in config:
-        utils.print_warning(
-            "Value of learning_rate not found, defaulting to 1e-4.")
-    learning_rate = config.get("learning_rate", 1e-4)
-    utils.check_type(learning_rate, float, "learning_rate")
-    if learning_rate <= 0:
-        raise ValueError("learning_rate must be greater than 0.")
-
-    # Batch size
-    if "batch_size" not in config:
-        utils.print_warning("Value of batch_size not found, defaulting to 1.")
-    batch_size = config.get("batch_size", 1)
-    utils.check_type(batch_size, int, "batch_size")
-    if batch_size <= 0:
-        raise ValueError("batch_size must be greater than 0.")
-
-    # Training images
-    if "train_path" not in config:
+    if config.get("train_path") is None:
         utils.print_warning(
             "No value for train_path was provided. Skipping training."
         )
-        return
-    if "train_validation_split" not in config:
+        return None
+
+    if config.get("train_validation_split") is None:
         utils.print_warning(
             "No value for train_validation_split was provided."
             " Defaulting to 0.7."
         )
-    if "file_formats" not in config:
+        train_validation_split = 0.7
+    else:
+        train_validation_split = config["train_validation_split"]
+
+    if config.get("file_formats") is None:
         utils.print_warning(
             "No value for file_formats was provided."
             " Defaulting to only accept .png"
         )
-    train_validation_split = config.get("train_validation_split", 0.7)
-    file_formats = config.get("file_formats", [".png"])
+        file_formats = [".png"]
+    else:
+        file_formats = config["file_formats"]
 
-    loader = image_loader.ImageLoader(
+    return image_loader.ImageLoader(
         config["train_path"],
         [
             utils.image_to_array,
@@ -176,6 +160,55 @@ def train_model(model: model.Model, config: dict[str, Any]) -> None:
         file_formats,
         train_validation_split,
     )
+# endregion Load image loader
+
+
+# region Train
+def train_model(
+    model: model.Model,
+    config: dict[str, Any]
+) -> bool:
+    """
+    Train the model based on the config values.
+
+    Args:
+        model: The model to train
+        config: The configuration values from the config file
+
+    Returns:
+        Boolean if the model was trained.
+    """
+    # Epochs
+    if not config.get("epochs"):
+        utils.print_warning(
+            "No value for epochs was provided or was 0. Skipping training."
+        )
+        return False
+    epochs = config["epochs"]
+
+    # Learning rate
+    if config.get("learning_rate") is None:
+        utils.print_warning(
+            "Value of learning_rate not found, defaulting to 1e-4."
+        )
+        learning_rate = 1e-4
+    else:
+        learning_rate = config["learning_rate"]
+    utils.check_type(learning_rate, (float, int), "learning_rate")
+    if learning_rate <= 0:
+        raise ValueError("learning_rate must be greater than 0.")
+
+    # Batch size
+    if config.get("batch_size") is None:
+        utils.print_warning("Value of batch_size not found, defaulting to 1.")
+        batch_size = 1
+    else:
+        batch_size = config["batch_size"]
+
+    # Training images
+    loader = get_image_loader(config)
+    if loader is None:
+        return False
 
     model.train(
         loader,
@@ -183,6 +216,7 @@ def train_model(model: model.Model, config: dict[str, Any]) -> None:
         batch_size,
         epochs
     )
+    return True
 # endregion Train
 
 
@@ -198,8 +232,9 @@ def main():
     """
     config = get_config()
     model = get_model(config)
-    train_model(model, config)
-    model.display_history_graph()
+    trained = train_model(model, config)
+    if trained:
+        model.display_history_graphs()
 
 
 if __name__ == "__main__":

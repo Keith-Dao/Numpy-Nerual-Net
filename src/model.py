@@ -9,11 +9,17 @@ from types import ModuleType
 from typing import Any
 
 import matplotlib.pyplot as plt
-import numpy as np
 from numpy.typing import NDArray
+from tabulate import tabulate
 from tqdm import tqdm
 
-from src import cross_entropy_loss, image_loader, linear, utils
+from src import (
+    cross_entropy_loss,
+    image_loader,
+    linear,
+    metrics,
+    utils
+)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -42,34 +48,21 @@ class Model:
 
         Keyword args:
             total_epochs: The total epochs of the model
-            train_history: The training loss history
-            validation_history: The validation loss history
+            train_metrics: The training metrics to store or
+                the training history metrics
+            validation_metrics: The validation metrics to store or
+                the validation history metrics
+            classes: The classes used to train the model
         """
         self._eval = False
         self.layers = layers
         self.loss = loss
         self.total_epochs = kwargs.get("total_epochs", 0)
-        self.train_history = kwargs.get("train_history", [])
-        self.validation_history = kwargs.get("validation_history", [])
 
-    # region Static methods
-    @staticmethod
-    def calculate_mean_epoch_loss(
-        history: list[float],
-        minibatches: int
-    ) -> float:
-        """
-        Calculate the mean loss for the previous epoch.
-
-        Args:
-            history: The loss values for the computed minibatches
-            minibatches: The number of minibatches in an epoch
-
-        Returns:
-            The mean epoch loss for the previous epoch.
-        """
-        return sum(history[-minibatches:]) / minibatches
-    # endregion Static methods
+        # Metrics
+        self.train_metrics = kwargs.get("train_metrics") or []
+        self.validation_metrics = kwargs.get("validation_metrics") or []
+        self.classes = kwargs.get("classes")
 
     # region Properties
     # region Evaluation mode
@@ -146,48 +139,81 @@ class Model:
         self._total_epochs = epochs
     # endregion Total epochs
 
-    # region Train history
+    # region Train metrics
     @property
-    def train_history(self) -> list[float]:
+    def train_metrics(self) -> dict[str, list[float]]:
         """
-        Model's training loss history.
+        The metrics to store when training the model.
         """
-        return self._train_history
+        return self._train_metrics
 
-    @train_history.setter
-    def train_history(self, train_history: list[float]) -> None:
-        utils.check_type(train_history, list, "train_history")
-        if any(not isinstance(loss, (float, int)) for loss in train_history):
-            raise TypeError(
-                "Invalid type for train_history. Expected all list elements to"
-                " be a number."
-            )
+    @train_metrics.setter
+    def train_metrics(self, train_metrics) -> None:
+        utils.check_type(train_metrics, (dict, list), "train_metrics")
 
-        self._train_history = train_history
-    # endregion Train history
+        if isinstance(train_metrics, dict):
+            self._train_metrics = train_metrics
+        else:
+            self._train_metrics = {
+                metric: []
+                for metric in train_metrics
+            }
 
-    # region Validation history
-    @property
-    def validation_history(self) -> list[float]:
-        """
-        Model's validation loss history.
-        """
-        return self._validation_history
-
-    @validation_history.setter
-    def validation_history(self, validation_history: list[float]) -> None:
-        utils.check_type(validation_history, list, "validation_history")
         if any(
-            not isinstance(loss, (float, int))
-            for loss in validation_history
+            metric != "loss" and not hasattr(metrics, metric)
+            for metric in self.train_metrics
         ):
-            raise TypeError(
-                "Invalid type for validation_history. Expected all list"
-                " elements to be a number."
+            raise ValueError(
+                "An invalid metric was provided to train_metrics."
             )
+        if any(
+            not isinstance(value, list)
+            for value in self.train_metrics.values()
+        ):
+            raise ValueError(
+                "All train metric histories must be a list."
+            )
+    # endregion Train metrics
 
-        self._validation_history = validation_history
-    # endregion Validation history
+    # region Train metrics
+    @property
+    def validation_metrics(self) -> dict[str, list[float]]:
+        """
+        The metrics to store when validating the model.
+        """
+        return self._validation_metrics
+
+    @validation_metrics.setter
+    def validation_metrics(self, validation_metrics) -> None:
+        utils.check_type(
+            validation_metrics,
+            (dict, list),
+            "validation_metrics"
+        )
+
+        if isinstance(validation_metrics, dict):
+            self._validation_metrics = validation_metrics
+        else:
+            self._validation_metrics = {
+                metric: []
+                for metric in validation_metrics
+            }
+
+        if any(
+            metric != "loss" and not hasattr(metrics, metric)
+            for metric in self.validation_metrics
+        ):
+            raise ValueError(
+                "An invalid metric was provided to validation_metrics."
+            )
+        if any(
+            not isinstance(value, list)
+            for value in self.validation_metrics.values()
+        ):
+            raise ValueError(
+                "All validation metric histories must be a list."
+            )
+    # endregion Train metrics
     # endregion Properties
 
     # region Load
@@ -266,8 +292,10 @@ class Model:
             - layers -- list of the serialised layers in sequential order
             - loss -- the loss function for the model
             - epochs -- the total number of epochs the model has trained for
-            - train_history -- the training loss history for the model
-            - validation_history -- the validation loss history for the model
+            - train_metrics -- the history of the training metrics for the
+                model
+            - validation_metrics -- the history of the validation metrics for
+                the model
 
         Returns:
             Attributes listed above as a dictionary.
@@ -280,8 +308,9 @@ class Model:
             ],
             "loss": self.loss.to_dict(),
             "epochs": self.total_epochs,
-            "train_history": self.train_history,
-            "validation_history": self.validation_history
+            "train_metrics": self.train_metrics,
+            "validation_metrics": self.validation_metrics,
+            "classes": self.classes
         }
 
     def save(self, save_path: str | pathlib.Path):
@@ -327,6 +356,34 @@ class Model:
         for layer in self.layers:
             out = layer(out)
         return out
+
+    def get_loss_with_confusion_matrix(
+        self,
+        input_: NDArray,
+        confusion_matrix: NDArray,
+        labels: list[int]
+    ) -> float:
+        """
+        Perform the forward pass and store the predictions to the
+        confusion matrix.
+
+        Args:
+            input_: The input values to the model
+            confusion_matrix: The confusion matrix where the rows
+                represent the predicted class and the columns
+                represent the actual class
+            labels: The ground truth labels for the inputs
+
+        Returns:
+            The loss of the forward pass.
+        """
+        logits = self(input_)
+        metrics.add_to_confusion_matrix(
+            confusion_matrix,
+            utils.logits_to_prediction(logits),
+            labels
+        )
+        return self.loss(logits, labels)
     # endregion Forward pass
 
     # region Train
@@ -334,7 +391,8 @@ class Model:
         self,
         data: NDArray,
         labels: list[int],
-        learning_rate: float
+        learning_rate: float,
+        confusion_matrix: NDArray
     ) -> float:
         """
         Perform a training step for one minibatch.
@@ -343,12 +401,18 @@ class Model:
             data: The minibatch data
             labels: The ground truth labels for the inputs
             learning_rate: The learning rate
+            confusion_matrix: The confusion matrix where the rows
+                represent the predicted class and the columns
+                represent the actual class
 
         Returns:
             The output loss.
         """
-        output = self(data)
-        loss = self.loss(output, labels)
+        loss = self.get_loss_with_confusion_matrix(
+            data,
+            confusion_matrix,
+            labels
+        )
         grad = self.loss.backward()
         for layer in reversed(self.layers):
             grad = layer.update(grad, learning_rate)
@@ -370,24 +434,27 @@ class Model:
             batch_size: The batch size
             epochs: The number of epochs to train for
         """
+        self.classes = data_loader.classes
+        num_classes = len(self.classes)
         for epoch in range(1, epochs + 1):
-            print(f"Epoch {epoch}:")
             # Training
             training_data = data_loader("train", batch_size=batch_size)
-            self.train_history.extend([
+            confusion_matrix = metrics.get_new_confusion_matrix(num_classes)
+            total_training_loss = sum(
                 self._train_step(
                     data,
                     labels,
-                    learning_rate
+                    learning_rate,
+                    confusion_matrix
                 )
-                for data, labels in tqdm(training_data)
-            ])
-            print(f"""Loss: {
-                Model.calculate_mean_epoch_loss(
-                    self.train_history,
-                    len(training_data)
+                for data, labels in tqdm(
+                    training_data,
+                    desc=f"Training epoch {epoch}/{epochs}"
                 )
-            }""")
+            )
+            training_loss = total_training_loss / len(training_data)
+            self.store_metrics("train", confusion_matrix, training_loss)
+            self.print_metrics("train")
 
             # Validation
             validation_data = data_loader("test", batch_size=batch_size)
@@ -395,68 +462,162 @@ class Model:
                 continue
 
             self.eval = True
-            self.validation_history.extend([
-                self.loss(
-                    self(data),
+            confusion_matrix = metrics.get_new_confusion_matrix(num_classes)
+            total_validation_loss = sum(
+                self.get_loss_with_confusion_matrix(
+                    data,
+                    confusion_matrix,
                     labels
                 )
-                for data, labels in validation_data
-            ])
-            print(
-                f"""Validation Loss: {
-                    Model.calculate_mean_epoch_loss(
-                        self.validation_history,
-                        len(validation_data)
-                    )
-                }"""
+                for data, labels in tqdm(
+                    validation_data,
+                    desc=f"Validating epoch {epoch}/{epochs}"
+                )
             )
+            validation_loss = total_validation_loss / len(validation_data)
+            self.store_metrics("validation", confusion_matrix, validation_loss)
+            self.print_metrics("validation")
             self.eval = False
         self.total_epochs += epochs
     # endregion Train
 
+    # region Metrics
+    def store_metrics(
+        self,
+        dataset: str,
+        confusion_matrix: NDArray,
+        loss: float
+    ) -> None:  # pragma: no cover
+        """
+        Store the metrics.
+
+        Args:
+            dataset: The metric's dataset
+            confusion_matrix: The confusion matrix to use for the metrics
+            loss: The loss
+        """
+        metrics_ = getattr(self, f"{dataset}_metrics")
+        for metric in metrics_.keys():
+            metrics_[metric].append(
+                loss
+                if metric == "loss"
+                else getattr(metrics, metric)(confusion_matrix)
+            )
+
+    def print_metrics(self, dataset: str) -> None:  # pragma: no cover
+        """
+        Print the tracked metrics.
+
+        Args:
+            dataset: The metric's dataset
+        """
+        if self.classes is None:
+            raise ValueError("Cannot print metrics without classes.")
+
+        metrics_ = getattr(self, f"{dataset}_metrics")
+        multiclass_headers, multiclass_data = ["Class"], [self.classes]
+        singular_headers, singular_data = [], []
+
+        for metric in metrics_:
+            if metric in metrics.SINGLE_VALUE_METRICS:
+                headers = singular_headers
+                data = singular_data
+            else:
+                headers = multiclass_headers
+                data = multiclass_data
+
+            headers.append(" ".join(metric.split("_")).capitalize())
+            data.append(metrics_[metric][-1])
+
+        float_format = ".4f"
+        if singular_headers:
+            print(tabulate(
+                [singular_data],
+                headers=singular_headers,
+                floatfmt=float_format
+            ))
+            print()
+
+        if len(multiclass_headers) > 1:
+            multiclass_data = list(zip(*multiclass_data))
+            print(tabulate(
+                multiclass_data,
+                headers=multiclass_headers,
+                floatfmt=float_format
+            ))
+            print()
+    # endregion Metrics
+
     # region Visualisation
-    def generate_history_graph(self) -> None:  # pragma: no cover
+    def _plot_metric(
+        self,
+        dataset: str,
+        metric: str,
+        axis: plt.Axes
+    ) -> None:  # pragma: no cover
+        """
+        Plot the metric.
+
+        Args:
+            dataset: The metric's dataset
+            metric: The metric to plot
+            axis: The axis to plot the metric on
+        """
+        if self.classes is None:
+            raise ValueError("Cannot plot metrics. Missing classes.")
+        if metric not in metrics.SINGLE_VALUE_METRICS:
+            raise ValueError(f"Plotting {metric} is not supported.")
+
+        metrics_ = getattr(self, f"{dataset}_metrics")
+        if metric not in metrics_:
+            return
+
+        axis.plot(
+            range(1, self.total_epochs + 1),
+            metrics_[metric],
+            "-",
+            label=dataset.capitalize()
+        )
+
+    def _generate_history_graph(self, metric: str) -> None:  # pragma: no cover
         """
         Generates the model's history data.
-        """
-        train_points = np.linspace(
-            0,
-            self.total_epochs,
-            len(self.train_history)
-        )
-        validation_points = np.linspace(
-            0,
-            self.total_epochs,
-            len(self.validation_history)
-        )
 
+        Args:
+            metric: The metric to generate a history graph for
+            classes: The classes being displayed
+        """
+        if metric not in metrics.SINGLE_VALUE_METRICS:
+            return
         fig = plt.figure()
         axis = fig.add_subplot(1, 1, 1)
-        axis.plot(
-            train_points,
-            self.train_history,
-            "-c",
-            label="Training Loss"
-        )
-        axis.plot(
-            validation_points,
-            self.validation_history,
-            "-r",
-            label="Validation Loss"
-        )
+
+        self._plot_metric("train", metric, axis)
+        self._plot_metric("validation", metric, axis)
+
         axis.legend(loc="upper right")
         axis.set_xlabel("Epoch")
+        metric_name = " ".join(metric.split("_")).capitalize()
+        axis.set_title(metric_name)
+        axis.set_ylabel(metric_name)
+        axis.set_xticks(range(1, self.total_epochs + 1))
 
-    def display_history_graph(self) -> None:  # pragma: no cover
+    def display_history_graphs(self) -> None:  # pragma: no cover
         """
-        Generates and displays the model's history graph.
+        Generates and displays the model's history graphs.
+
+        Args:
+            classes: The classes that are being displayed
         """
-        self.generate_history_graph()
+        for metric in (
+            set(self.train_metrics.keys()) |
+            set(self.validation_metrics.keys())
+        ):
+            self._generate_history_graph(metric)
         plt.show()
     # endregion Visualisation
 
     # region Built-ins
-
     def __call__(self, input_: NDArray) -> NDArray:
         """
         Perform the forward pass.

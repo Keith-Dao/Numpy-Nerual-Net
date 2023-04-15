@@ -146,6 +146,21 @@ def flatten(data: NDArray) -> NDArray:
     The flatten data.
     """
     return np.ravel(data)
+
+
+def logits_to_prediction(logits: NDArray) -> list[int]:
+    """
+    Convert the logits to a predicted class label.
+
+    Args:
+        logits: The logits to convert
+
+    Returns:
+        The list of predicted classes.
+    """
+    if len(logits.shape) == 1:
+        logits = np.expand_dims(logits, 0)
+    return list(np.argmax(softmax(logits), axis=-1))
 # endregion Array functions
 
 
