@@ -1,17 +1,15 @@
 ---
 # Data
 train_path: # TODO: add path to training images e.g. ./data/train
-train_validation_split: # TODO: add train data split e.g. 0.7
+train_validation_split: 0.7
 test_path: # TODO: Add path to test images  e.g. ./data/test
 file_formats:
-  # TODO: Add file formats here like below
-  # - '.png'
-  # - '.jpg'
-batch_size: # TODO : add batch size e.g. 128
+  - '.jpg'
+batch_size: 128
 
 # Training
-epochs: # TODO: add number of training epochs e.g. 10
-learning_rate: # TODO: add learning rate e.g. 1.0e-2
+epochs: 10
+learning_rate: 1.0e-2
 
 # Model
 model_path: # Optional: Model load path
