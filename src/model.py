@@ -10,6 +10,7 @@ from typing import Any
 
 import matplotlib.pyplot as plt
 from numpy.typing import NDArray
+from tabulate import tabulate
 from tqdm import tqdm
 
 from src import (
@@ -380,7 +381,6 @@ class Model:
             labels
         )
         return self.loss(logits, labels)
-
     # endregion Forward pass
 
     # region Train
@@ -447,9 +447,8 @@ class Model:
                 for data, labels in tqdm(training_data, desc="Training")
             )
             training_loss = total_training_loss / len(training_data)
-            if "loss" in self.train_metrics:
-                self.train_metrics["loss"].append(training_loss)
-            print(f"""Loss: {training_loss}""")
+            self.store_metrics("train", confusion_matrix, training_loss)
+            self.print_metrics("train", data_loader.classes)
 
             # Validation
             validation_data = data_loader("test", batch_size=batch_size)
@@ -467,14 +466,61 @@ class Model:
                 for data, labels in tqdm(validation_data, desc="Validation")
             )
             validation_loss = total_validation_loss / len(validation_data)
-            if "loss" in self.validation_metrics:
-                self.validation_metrics["loss"].append(validation_loss)
-            print(
-                f"""Validation Loss: {validation_loss}"""
-            )
+            self.store_metrics("validation", confusion_matrix, validation_loss)
+            self.print_metrics("validation", data_loader.classes)
             self.eval = False
         self.total_epochs += epochs
     # endregion Train
+
+    # region Metrics
+    def store_metrics(
+        self,
+        metric_type: str,
+        confusion_matrix: NDArray,
+        loss: float
+    ) -> None:  # pragma: no cover
+        """
+        Store the metrics.
+
+        Args:
+            metric_type: The metric type to save the data to
+            confusion_matrix: The confusion matrix to use for the metrics
+            loss: The loss
+        """
+        metrics_ = getattr(self, f"{metric_type}_metrics")
+        for metric in metrics_.keys():
+            metrics_[metric].append(
+                loss
+                if metric == "loss"
+                else getattr(metrics, metric)(confusion_matrix)
+            )
+
+    def print_metrics(
+        self,
+        metric_type: str,
+        classes: list[str]
+    ) -> None:  # pragma: no cover
+        """
+        Print the tracked metrics.
+
+        Args:
+            metric_type: The metric type to display
+            classes: The classes in the same order as the confusion matrix
+        """
+        metrics_ = getattr(self, f"{metric_type}_metrics")
+        headers = ["Class"]
+        tabulated_data = [classes]
+        for metric in metrics_:
+            if metric in metrics.SINGLE_VALUE_METRICS:
+                print(f"{metric.capitalize()}: {metrics_[metric][-1]:.4f}")
+            else:
+                headers.append(metric.capitalize())
+                tabulated_data.append(metrics_[metric][-1])
+
+        if len(headers) > 1:
+            tabulated_data = list(zip(*tabulated_data))
+            print(tabulate(tabulated_data, headers=headers, floatfmt=".4f"))
+    # endregion Metrics
 
     # region Visualisation
     def generate_history_graph(self, metric: str) -> None:  # pragma: no cover

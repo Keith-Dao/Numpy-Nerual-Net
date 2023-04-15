@@ -46,6 +46,9 @@ def add_to_confusion_matrix(
 
 
 # region Metrics
+SINGLE_VALUE_METRICS = {"accuracy", "loss"}
+
+
 def accuracy(confusion_matrix: NDArray) -> float:
     """
     The accuracy for the given confusion matrix.

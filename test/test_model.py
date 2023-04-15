@@ -173,6 +173,7 @@ class TestModel:
                 self.train_y = y[:train_size]
                 self.val_X = X[train_size:]
                 self.val_y = y[train_size:]
+                self.classes = list(set(y))
 
             def __call__(self, type_, batch_size):
                 if type_ == "train":
