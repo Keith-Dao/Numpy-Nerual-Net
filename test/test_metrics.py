@@ -10,7 +10,8 @@ from src.metrics import (
     accuracy,
     get_new_confusion_matrix,
     add_to_confusion_matrix,
-    precision
+    precision,
+    recall
 )
 from . import FLOAT_TOLERANCE
 
@@ -102,3 +103,28 @@ class TestPrecision:
             atol=FLOAT_TOLERANCE
         )
 
+
+class TestRecall:
+    """
+    Recall tester.
+    """
+    @pytest.mark.parametrize("confusion_matrix, expected", [
+        (np.array([[3, 2], [1, 4]]), [0.75, 0.666666]),
+        (
+            np.array([[4, 4, 2], [0, 2, 0], [3, 2, 5]]),
+            [0.5714285714285714, 0.25, 0.7142857142857143]
+        ),
+        (
+            np.array([[20, 1, 60], [29, 13, 2], [32, 6, 34]]),
+            [0.24691358024691357, 0.65, 0.3541666666666667]
+        )
+    ])
+    def test_recall(self, confusion_matrix, expected):
+        """
+        Tests recall.
+        """
+        assert np.allclose(
+            recall(confusion_matrix),
+            expected,
+            atol=FLOAT_TOLERANCE
+        )

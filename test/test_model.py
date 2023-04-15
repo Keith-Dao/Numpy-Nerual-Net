@@ -353,7 +353,8 @@ class TestModel:
     @pytest.mark.parametrize("train_metrics", [
         {"loss": [1, 2, 3, 4]},
         {"accuracy": []},
-        {"precision": []}
+        {"precision": []},
+        {"recall": []}
     ])
     def test_train_metrics_dict(self, model, train_metrics):
         """
@@ -392,7 +393,8 @@ class TestModel:
     @pytest.mark.parametrize("validation_metrics", [
         {"loss": [1, 2, 3, 4]},
         {"accuracy": []},
-        {"precision": []}
+        {"precision": []},
+        {"recall": []}
     ])
     def test_validation_metrics_dict(self, model, validation_metrics):
         """
