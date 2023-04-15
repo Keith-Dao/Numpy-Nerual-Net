@@ -164,20 +164,26 @@ def get_image_loader(
 
 
 # region Train
-def train_model(model: model.Model, config: dict[str, Any]) -> None:
+def train_model(
+    model: model.Model,
+    config: dict[str, Any]
+) -> bool:
     """
     Train the model based on the config values.
 
     Args:
         model: The model to train
         config: The configuration values from the config file
+
+    Returns:
+        Boolean if the model was trained.
     """
     # Epochs
     if not config.get("epochs"):
         utils.print_warning(
             "No value for epochs was provided or was 0. Skipping training."
         )
-        return
+        return False
     epochs = config["epochs"]
 
     # Learning rate
@@ -202,7 +208,7 @@ def train_model(model: model.Model, config: dict[str, Any]) -> None:
     # Training images
     loader = get_image_loader(config)
     if loader is None:
-        return
+        return False
 
     model.train(
         loader,
@@ -210,6 +216,7 @@ def train_model(model: model.Model, config: dict[str, Any]) -> None:
         batch_size,
         epochs
     )
+    return True
 # endregion Train
 
 
@@ -225,8 +232,9 @@ def main():
     """
     config = get_config()
     model = get_model(config)
-    train_model(model, config)
-    model.display_history_graphs()
+    trained = train_model(model, config)
+    if trained:
+        model.display_history_graphs()
 
 
 if __name__ == "__main__":

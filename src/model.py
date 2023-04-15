@@ -52,6 +52,7 @@ class Model:
                 the training history metrics
             validation_metrics: The validation metrics to store or
                 the validation history metrics
+            classes: The classes used to train the model
         """
         self._eval = False
         self.layers = layers
@@ -61,6 +62,7 @@ class Model:
         # Metrics
         self.train_metrics = kwargs.get("train_metrics") or []
         self.validation_metrics = kwargs.get("validation_metrics") or []
+        self.classes = kwargs.get("classes")
 
     # region Properties
     # region Evaluation mode
@@ -307,7 +309,8 @@ class Model:
             "loss": self.loss.to_dict(),
             "epochs": self.total_epochs,
             "train_metrics": self.train_metrics,
-            "validation_metrics": self.validation_metrics
+            "validation_metrics": self.validation_metrics,
+            "classes": self.classes
         }
 
     def save(self, save_path: str | pathlib.Path):
@@ -431,7 +434,8 @@ class Model:
             batch_size: The batch size
             epochs: The number of epochs to train for
         """
-        num_classes = self.layers[-1].out_channels
+        self.classes = data_loader.classes
+        num_classes = len(self.classes)
         for epoch in range(1, epochs + 1):
             # Training
             training_data = data_loader("train", batch_size=batch_size)
@@ -450,7 +454,7 @@ class Model:
             )
             training_loss = total_training_loss / len(training_data)
             self.store_metrics("train", confusion_matrix, training_loss)
-            self.print_metrics("train", data_loader.classes)
+            self.print_metrics("train")
 
             # Validation
             validation_data = data_loader("test", batch_size=batch_size)
@@ -472,7 +476,7 @@ class Model:
             )
             validation_loss = total_validation_loss / len(validation_data)
             self.store_metrics("validation", confusion_matrix, validation_loss)
-            self.print_metrics("validation", data_loader.classes)
+            self.print_metrics("validation")
             self.eval = False
         self.total_epochs += epochs
     # endregion Train
@@ -480,7 +484,7 @@ class Model:
     # region Metrics
     def store_metrics(
         self,
-        metric_type: str,
+        dataset: str,
         confusion_matrix: NDArray,
         loss: float
     ) -> None:  # pragma: no cover
@@ -488,11 +492,11 @@ class Model:
         Store the metrics.
 
         Args:
-            metric_type: The metric type to save the data to
+            dataset: The metric's dataset
             confusion_matrix: The confusion matrix to use for the metrics
             loss: The loss
         """
-        metrics_ = getattr(self, f"{metric_type}_metrics")
+        metrics_ = getattr(self, f"{dataset}_metrics")
         for metric in metrics_.keys():
             metrics_[metric].append(
                 loss
@@ -500,20 +504,18 @@ class Model:
                 else getattr(metrics, metric)(confusion_matrix)
             )
 
-    def print_metrics(
-        self,
-        metric_type: str,
-        classes: list[str]
-    ) -> None:  # pragma: no cover
+    def print_metrics(self, dataset: str) -> None:  # pragma: no cover
         """
         Print the tracked metrics.
 
         Args:
-            metric_type: The metric type to display
-            classes: The classes in the same order as the confusion matrix
+            dataset: The metric's dataset
         """
-        metrics_ = getattr(self, f"{metric_type}_metrics")
-        multiclass_headers, multiclass_data = ["Class"], [classes]
+        if self.classes is None:
+            raise ValueError("Cannot print metrics without classes.")
+
+        metrics_ = getattr(self, f"{dataset}_metrics")
+        multiclass_headers, multiclass_data = ["Class"], [self.classes]
         singular_headers, singular_data = [], []
 
         for metric in metrics_:
@@ -547,51 +549,75 @@ class Model:
     # endregion Metrics
 
     # region Visualisation
+    def _plot_metric(
+        self,
+        dataset: str,
+        metric: str,
+        axis: plt.Axes
+    ) -> None:  # pragma: no cover
+        """
+        Plot the metric.
+
+        Args:
+            dataset: The metric's dataset
+            metric: The metric to plot
+            axis: The axis to plot the metric on
+        """
+        if self.classes is None:
+            raise ValueError("Cannot plot metrics. Missing classes.")
+        if metric not in metrics.SINGLE_VALUE_METRICS:
+            raise ValueError(f"Plotting {metric} is not supported.")
+
+        metrics_ = getattr(self, f"{dataset}_metrics")
+        if metric not in metrics_:
+            return
+
+        axis.plot(
+            range(1, self.total_epochs + 1),
+            metrics_[metric],
+            "-",
+            label=dataset.capitalize()
+        )
+
     def _generate_history_graph(self, metric: str) -> None:  # pragma: no cover
         """
         Generates the model's history data.
 
         Args:
             metric: The metric to generate a history graph for
+            classes: The classes being displayed
         """
         if metric not in metrics.SINGLE_VALUE_METRICS:
             return
-
-        metric_name = " ".join(metric.split("_")).capitalize()
         fig = plt.figure()
         axis = fig.add_subplot(1, 1, 1)
 
-        if metric in self.train_metrics:
-            axis.plot(
-                self.train_metrics[metric],
-                "-c",
-                label=f"Training {metric_name}"
-            )
-        if metric in self.validation_metrics:
-            axis.plot(
-                self.validation_metrics[metric],
-                "-r",
-                label=f"Validation {metric_name}"
-            )
+        self._plot_metric("train", metric, axis)
+        self._plot_metric("validation", metric, axis)
 
         axis.legend(loc="upper right")
         axis.set_xlabel("Epoch")
-        axis.set_xticks(range(self.total_epochs))
+        metric_name = " ".join(metric.split("_")).capitalize()
+        axis.set_title(metric_name)
+        axis.set_ylabel(metric_name)
+        axis.set_xticks(range(1, self.total_epochs + 1))
 
     def display_history_graphs(self) -> None:  # pragma: no cover
         """
         Generates and displays the model's history graphs.
+
+        Args:
+            classes: The classes that are being displayed
         """
         for metric in (
-            set(self.train_metrics.keys())
-            | set(self.validation_metrics.keys())
+            set(self.train_metrics.keys()) |
+            set(self.validation_metrics.keys())
         ):
             self._generate_history_graph(metric)
         plt.show()
     # endregion Visualisation
 
     # region Built-ins
-
     def __call__(self, input_: NDArray) -> NDArray:
         """
         Perform the forward pass.
