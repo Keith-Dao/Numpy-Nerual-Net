@@ -72,7 +72,14 @@ def precision(confusion_matrix: NDArray) -> NDArray:
     Returns:
         The precision.
     """
-    return confusion_matrix.diagonal() / confusion_matrix.sum(axis=1)
+    correct_predictions = confusion_matrix.diagonal().astype(float)
+    actual = confusion_matrix.sum(axis=1, dtype=float)
+    return np.divide(
+        correct_predictions,
+        actual,
+        out=np.zeros_like(correct_predictions),
+        where=actual != 0
+    )
 
 
 def recall(confusion_matrix: NDArray) -> NDArray:
@@ -85,7 +92,14 @@ def recall(confusion_matrix: NDArray) -> NDArray:
     Returns:
         The recall.
     """
-    return confusion_matrix.diagonal() / confusion_matrix.sum(axis=0)
+    correct_predictions = confusion_matrix.diagonal().astype(float)
+    predicted = confusion_matrix.sum(axis=0, dtype=float)
+    return np.divide(
+        correct_predictions,
+        predicted,
+        out=np.zeros_like(correct_predictions),
+        where=predicted != 0
+    )
 
 
 def f1_score(confusion_matrix: NDArray) -> NDArray:
@@ -100,5 +114,10 @@ def f1_score(confusion_matrix: NDArray) -> NDArray:
     """
     precision_ = precision(confusion_matrix)
     recall_ = recall(confusion_matrix)
-    return 2 * precision_ * recall_ / (precision_ + recall_)
+    return np.divide(
+        2 * precision_ * recall_,
+        precision_ + recall_,
+        out=np.zeros_like(precision_),
+        where=precision_ + recall_ != 0
+    )
 # endregion Metrics
