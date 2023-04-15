@@ -433,7 +433,6 @@ class Model:
         """
         num_classes = self.layers[-1].out_channels
         for epoch in range(1, epochs + 1):
-            print(f"Epoch {epoch}:")
             # Training
             training_data = data_loader("train", batch_size=batch_size)
             confusion_matrix = metrics.get_new_confusion_matrix(num_classes)
@@ -444,7 +443,10 @@ class Model:
                     learning_rate,
                     confusion_matrix
                 )
-                for data, labels in tqdm(training_data, desc="Training")
+                for data, labels in tqdm(
+                    training_data,
+                    desc=f"Training epoch {epoch}/{epochs}"
+                )
             )
             training_loss = total_training_loss / len(training_data)
             self.store_metrics("train", confusion_matrix, training_loss)
@@ -463,7 +465,10 @@ class Model:
                     confusion_matrix,
                     labels
                 )
-                for data, labels in tqdm(validation_data, desc="Validation")
+                for data, labels in tqdm(
+                    validation_data,
+                    desc=f"Validating epoch {epoch}/{epochs}"
+                )
             )
             validation_loss = total_validation_loss / len(validation_data)
             self.store_metrics("validation", confusion_matrix, validation_loss)
