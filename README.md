@@ -118,13 +118,20 @@ model_path: # Model load path
 
 ### 2.4. Metrics
 
-Valid metrics include (**NOTE**: the selected metrics must exactly match below):
+Valid metrics include:
 
 - loss
 - accuracy
 - precision
 - recall
 - f1_score
+
+**NOTE**:
+
+- The selected metrics must exactly match the above
+- Only following metrics will be visualised as a history graph:
+  - loss
+  - accuracy
 
 ---
 
