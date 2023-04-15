@@ -13,3 +13,15 @@ learning_rate: 1.0e-2
 
 # Model
 model_path: # Optional: Model load path
+
+# Metrics
+train_metrics:
+  - loss
+  - accuracy
+  - precision
+  - recall
+validation_metrics:
+  - loss
+  - accuracy
+  - precision
+  - recall
