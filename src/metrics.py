@@ -59,3 +59,16 @@ def accuracy(confusion_matrix: NDArray) -> float:
     return confusion_matrix.diagonal().sum() / confusion_matrix.sum()
 
 
+def precision(confusion_matrix: NDArray) -> NDArray:
+    """
+    The precision for all classes in the confusion matrix.
+
+    Args:
+        confusion_matrix: The confusion matrix
+
+    Returns:
+        The precision.
+    """
+    return confusion_matrix.diagonal() / confusion_matrix.sum(axis=1)
+
+

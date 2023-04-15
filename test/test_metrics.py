@@ -9,7 +9,8 @@ import pytest
 from src.metrics import (
     accuracy,
     get_new_confusion_matrix,
-    add_to_confusion_matrix
+    add_to_confusion_matrix,
+    precision
 )
 from . import FLOAT_TOLERANCE
 
@@ -78,4 +79,26 @@ class TestAccuracy:
             abs_tol=FLOAT_TOLERANCE
         )
 
+
+class TestPrecision:
+    """
+    Precision tester.
+    """
+    @pytest.mark.parametrize("confusion_matrix, expected", [
+        (np.array([[3, 2], [1, 4]]), [0.6, 0.8]),
+        (np.array([[4, 4, 2], [0, 2, 0], [3, 2, 5]]), [0.4, 1, 0.5]),
+        (
+            np.array([[20, 1, 60], [29, 13, 2], [32, 6, 34]]),
+            [0.24691358024691357, 0.29545454545454547, 0.4722222222222222]
+        )
+    ])
+    def test_precision(self, confusion_matrix, expected):
+        """
+        Tests precision.
+        """
+        assert np.allclose(
+            precision(confusion_matrix),
+            expected,
+            atol=FLOAT_TOLERANCE
+        )
 
