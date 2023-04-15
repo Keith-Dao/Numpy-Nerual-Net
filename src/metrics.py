@@ -43,3 +43,19 @@ def add_to_confusion_matrix(
     for pred, act in zip(predictions, actual):
         confusion_matrix[pred, act] += 1
 # endregion Confusion matrix
+
+
+# region Metrics
+def accuracy(confusion_matrix: NDArray) -> float:
+    """
+    The accuracy for the given confusion matrix.
+
+    Args:
+        confusion_matrix: The confusion matrix
+
+    Returns:
+        The accuracy.
+    """
+    return confusion_matrix.diagonal().sum() / confusion_matrix.sum()
+
+

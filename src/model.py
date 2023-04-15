@@ -12,7 +12,13 @@ import matplotlib.pyplot as plt
 from numpy.typing import NDArray
 from tqdm import tqdm
 
-from src import cross_entropy_loss, image_loader, linear, metrics, utils
+from src import (
+    cross_entropy_loss,
+    image_loader,
+    linear,
+    metrics,
+    utils
+)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -150,7 +156,10 @@ class Model:
                 for metric in train_metrics
             }
 
-        if any(key != "loss" for key in self.train_metrics):
+        if any(
+            metric != "loss" and not hasattr(metrics, metric)
+            for metric in self.train_metrics
+        ):
             raise ValueError(
                 "An invalid metric was provided to train_metrics."
             )
@@ -187,7 +196,10 @@ class Model:
                 for metric in validation_metrics
             }
 
-        if any(key != "loss" for key in self.validation_metrics):
+        if any(
+            metric != "loss" and not hasattr(metrics, metric)
+            for metric in self.validation_metrics
+        ):
             raise ValueError(
                 "An invalid metric was provided to validation_metrics."
             )
