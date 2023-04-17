@@ -3,6 +3,7 @@ This module is the main driver file.
 """
 import argparse
 import pathlib
+import readline
 import sys
 from typing import Any
 
@@ -220,6 +221,55 @@ def train_model(
 # endregion Train
 
 
+# region Save prompt
+def prompt_save(model: model.Model) -> None:
+    """
+    Prompt model save.
+    """
+    readline.set_auto_history(True)
+
+    def is_yes(response: str) -> bool:
+        while response not in ["y", "n"]:
+            response = input(
+                "Please enter either y for yes or n for no: ").lower()
+        return response == "y"
+
+    response = input("Would you like to save the model? [y/n]: ").lower()
+    if not is_yes(response):
+        return
+
+    def is_valid_path(path: pathlib.Path) -> bool:
+        if path.suffix not in model.SAVE_METHODS.keys():
+            utils.print_error(
+                f"File format \"{save_path.suffix}\" is not supported."
+                f" Select from {' or '.join(model.SAVE_METHODS.keys())}."
+            )
+            return False
+
+        if path.exists():
+            response = input(
+                "The current file already exists. Would you like to overwrite"
+                " it? [y/n]: "
+            )
+            return is_yes(response)
+
+        return True
+
+    save_path = pathlib.Path(input(
+        "Where would you like to save the model file?"
+        " Enter a file path with the one of the following extensions"
+        f" ({', '.join(model.SAVE_METHODS.keys())}): "
+    ))
+    while not is_valid_path(save_path):
+        save_path = pathlib.Path(
+            input("Please enter the location to save the model file: ")
+        )
+    save_path.parent.mkdir(parents=True, exist_ok=True)
+    model.save(save_path)
+    print(f"Model successfully saved at {save_path.resolve()}.")
+# endregion Save prompt
+
+
 def main():
     """
     Sets up the environment based on the config file.
@@ -235,6 +285,7 @@ def main():
     trained = train_model(model, config)
     if trained:
         model.display_history_graphs()
+        prompt_save(model)
 
 
 if __name__ == "__main__":

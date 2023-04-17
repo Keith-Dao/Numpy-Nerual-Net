@@ -330,7 +330,7 @@ class Model:
 
         if save_path.suffix not in Model.SAVE_METHODS:
             raise ValueError(
-                f"File format {save_path.suffix} not supported."
+                f"File format {save_path.suffix} is not supported."
                 f"Select from {' or '.join(Model.SAVE_METHODS.keys())}."
             )
 
