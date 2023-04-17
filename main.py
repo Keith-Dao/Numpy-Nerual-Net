@@ -238,6 +238,17 @@ def prompt_save(model: model.Model) -> None:
     if not is_yes(response):
         return
 
+    def get_path_input(message: str) -> pathlib.Path:
+        # Set path auto complete
+        readline.set_completer_delims(" \t\n=")
+        readline.parse_and_bind("tab: complete")
+        path = pathlib.Path(input(message))
+
+        # Reset to default
+        readline.set_completer_delims(readline.get_completer_delims())
+        readline.parse_and_bind('tab: self-insert')
+        return path
+
     def is_valid_path(path: pathlib.Path) -> bool:
         if path.suffix not in model.SAVE_METHODS.keys():
             utils.print_error(
@@ -255,14 +266,14 @@ def prompt_save(model: model.Model) -> None:
 
         return True
 
-    save_path = pathlib.Path(input(
+    save_path = get_path_input(
         "Where would you like to save the model file?"
         " Enter a file path with the one of the following extensions"
         f" ({', '.join(model.SAVE_METHODS.keys())}): "
-    ))
+    )
     while not is_valid_path(save_path):
-        save_path = pathlib.Path(
-            input("Please enter the location to save the model file: ")
+        save_path = get_path_input(
+            "Please enter the location to save the model file: "
         )
     save_path.parent.mkdir(parents=True, exist_ok=True)
     model.save(save_path)
