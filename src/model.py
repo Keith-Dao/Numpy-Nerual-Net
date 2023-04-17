@@ -501,7 +501,7 @@ class Model:
             metrics_[metric].append(
                 loss
                 if metric == "loss"
-                else getattr(metrics, metric)(confusion_matrix)
+                else getattr(metrics, metric)(confusion_matrix).tolist()
             )
 
     def print_metrics(self, dataset: str) -> None:  # pragma: no cover
