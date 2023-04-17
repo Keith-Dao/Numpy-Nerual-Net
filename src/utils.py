@@ -176,6 +176,17 @@ def print_warning(message: str) -> None:  # pragma: no cover
     print(f"{colorama.Fore.YELLOW}{message}{colorama.Style.RESET_ALL}")
 
 
+def print_error(message: str) -> None:  # pragma: no cover
+    """
+    Print the provided message as an error message.
+
+    Args:
+        message: Message to print.
+    """
+    colorama.just_fix_windows_console()
+    print(f"{colorama.Fore.RED}{message}{colorama.Style.RESET_ALL}")
+
+
 def check_type(
     value: Any,
     types: tuple[Type, ...] | Type,

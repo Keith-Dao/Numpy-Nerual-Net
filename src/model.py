@@ -330,7 +330,7 @@ class Model:
 
         if save_path.suffix not in Model.SAVE_METHODS:
             raise ValueError(
-                f"File format {save_path.suffix} not supported."
+                f"File format {save_path.suffix} is not supported."
                 f"Select from {' or '.join(Model.SAVE_METHODS.keys())}."
             )
 
@@ -501,7 +501,7 @@ class Model:
             metrics_[metric].append(
                 loss
                 if metric == "loss"
-                else getattr(metrics, metric)(confusion_matrix)
+                else getattr(metrics, metric)(confusion_matrix).tolist()
             )
 
     def print_metrics(self, dataset: str) -> None:  # pragma: no cover
