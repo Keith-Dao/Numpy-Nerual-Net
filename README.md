@@ -38,8 +38,8 @@ train_path: # Training image path
 train_validation_split: # Training validation split
 test_path: # Test image path
 file_formats:# File formats as a list
-  # - '.png'
-  # - '.jpg'
+  # - .png
+  # - .jpg
 batch_size: # Batch size
 
 # Training
@@ -48,6 +48,14 @@ learning_rate: # Learning rate
 
 # Model
 model_path: # Model load path
+
+# Metrics
+train_metrics:# Training metrics as a list
+  # - loss
+validation_metrics:# Validation metrics as a list
+  # - loss
+test_metrics:# Testing metrics as a list
+  # - loss
 ```
 
 ### 2.1. Data Configuration
@@ -148,3 +156,11 @@ Valid metrics include:
 - Metrics to track during validation
 - Only accepts the valid metrics listed above
 - Optional, defaults to no metrics if none are provided
+
+---
+
+**test_metrics**: list[str]
+
+- Metrics to track during testing
+- Only accepts the valid metrics listed above
+- Optional, defaults to no metrics if none are provided and skips testing
