@@ -292,7 +292,7 @@ class TestIsYes:
     @pytest.mark.parametrize("responses, expected", [
         ("y", True),
         ("q209fl;y", True),
-        ("1wea42\]Y", True),
+        (r"1wea42\]Y", True),
         ("43290\t2n", False),
         ("5325092-=N", False)
     ])
