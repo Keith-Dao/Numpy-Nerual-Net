@@ -661,12 +661,28 @@ class Model:
         Args:
             classes: The classes that are being displayed
         """
-        for metric in (
-            set(self.train_metrics.keys()) |
-            set(self.validation_metrics.keys())
-        ):
+        visualizable_metrics = (
+            (
+                set(self.train_metrics.keys())
+                | set(self.validation_metrics.keys())
+            )
+            & metrics.SINGLE_VALUE_METRICS
+        )
+        for metric in visualizable_metrics:
             self._generate_history_graph(metric)
-        plt.show()
+
+        graphed_metrics = utils.join_with_different_last(
+            visualizable_metrics,
+            ", ",
+            " and "
+        )
+        show_graph = input(
+            "Would you like to view the history graphs for"
+            f" {graphed_metrics}? [y/n]: "
+        )
+        if utils.is_yes(show_graph):
+            plt.show()
+        plt.close("all")
     # endregion Visualisation
 
     # region Built-ins
