@@ -154,10 +154,7 @@ class Model:
         if isinstance(train_metrics, dict):
             self._train_metrics = train_metrics
         else:
-            self._train_metrics = {
-                metric: []
-                for metric in train_metrics
-            }
+            self._train_metrics = Model.metrics_list_to_dict(train_metrics)
 
         if any(
             metric != "loss" and not hasattr(metrics, metric)
@@ -194,10 +191,9 @@ class Model:
         if isinstance(validation_metrics, dict):
             self._validation_metrics = validation_metrics
         else:
-            self._validation_metrics = {
-                metric: []
-                for metric in validation_metrics
-            }
+            self._validation_metrics = Model.metrics_list_to_dict(
+                validation_metrics
+            )
 
         if any(
             metric != "loss" and not hasattr(metrics, metric)
@@ -488,8 +484,15 @@ class Model:
                 )
             )
             training_loss = total_training_loss / len(training_data)
-            self.store_metrics("train", confusion_matrix, training_loss)
-            self.print_metrics("train")
+            Model.store_metrics(
+                self.train_metrics,
+                confusion_matrix,
+                training_loss
+            )
+            Model.print_metrics(
+                self.train_metrics,
+                self.classes
+            )
 
             # Validation
             validation_data = data_loader("test", batch_size=batch_size)
@@ -502,15 +505,40 @@ class Model:
                 f"Validation epoch {epoch}/{epochs}"
             )
             self.eval = False
-            self.store_metrics("validation", confusion_matrix, validation_loss)
-            self.print_metrics("validation")
+            Model.store_metrics(
+                self.validation_metrics,
+                confusion_matrix,
+                validation_loss
+            )
+            Model.print_metrics(
+                self.validation_metrics,
+                self.classes
+            )
         self.total_epochs += epochs
     # endregion Train
 
     # region Metrics
+    @staticmethod
+    def metrics_list_to_dict(metrics_: list[str]) -> dict[str, list]:
+        """
+        Convert a list of metrics to a dictionary to store the metric
+        history.
+
+        Args:
+            metrics_: The metrics to store
+
+        Returns:
+            A dictionary to store the history of each metric that
+            need to be stored.
+        """
+        return {
+            metric: []
+            for metric in metrics_
+        }
+
+    @staticmethod
     def store_metrics(
-        self,
-        dataset: str,
+        metrics_: dict[str, list],
         confusion_matrix: NDArray,
         loss: float
     ) -> None:  # pragma: no cover
@@ -518,11 +546,10 @@ class Model:
         Store the metrics.
 
         Args:
-            dataset: The metric's dataset
+            metrics_: The dictionary storing the metrics history
             confusion_matrix: The confusion matrix to use for the metrics
             loss: The loss
         """
-        metrics_ = getattr(self, f"{dataset}_metrics")
         for metric in metrics_.keys():
             metrics_[metric].append(
                 loss
@@ -530,18 +557,19 @@ class Model:
                 else getattr(metrics, metric)(confusion_matrix).tolist()
             )
 
-    def print_metrics(self, dataset: str) -> None:  # pragma: no cover
+    @staticmethod
+    def print_metrics(
+        metrics_: dict[str, list],
+        classes: list[str]
+    ) -> None:  # pragma: no cover
         """
         Print the tracked metrics.
 
         Args:
-            dataset: The metric's dataset
+            metrics_: The dictionary storing the metrics history
+            classes: The classes of the dataset
         """
-        if self.classes is None:
-            raise ValueError("Cannot print metrics without classes.")
-
-        metrics_ = getattr(self, f"{dataset}_metrics")
-        multiclass_headers, multiclass_data = ["Class"], [self.classes]
+        multiclass_headers, multiclass_data = ["Class"], [classes]
         singular_headers, singular_data = [], []
 
         for metric in metrics_:
