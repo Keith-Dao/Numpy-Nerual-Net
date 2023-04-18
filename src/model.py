@@ -561,8 +561,7 @@ class Model:
                 [singular_data],
                 headers=singular_headers,
                 floatfmt=float_format
-            ))
-            print()
+            ), end="\n\n")
 
         if len(multiclass_headers) > 1:
             multiclass_data = list(zip(*multiclass_data))
@@ -570,8 +569,7 @@ class Model:
                 multiclass_data,
                 headers=multiclass_headers,
                 floatfmt=float_format
-            ))
-            print()
+            ), end="\n\n")
     # endregion Metrics
 
     # region Visualisation
