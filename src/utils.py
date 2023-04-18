@@ -231,4 +231,32 @@ def is_yes(response: str) -> bool:  # pragma: no cover
             "Please enter either y for yes or n for no: "
         ).lower()
     return response == "y"
+
+
+def join_with_different_last(
+    tokens: Iterable[str],
+    connector: str,
+    last_connector: str
+) -> str:
+    """
+    Join a list of items but use a different connector for the last
+    pair.
+
+    Args:
+        tokens: The words to connect
+        connector: The connector for all the pairs except the last
+        last_connector: The connector to use for the last pair
+
+    Returns:
+        The joined tokens.
+    """
+    tokens = list(tokens)
+    if not tokens:
+        return ""
+
+    last = tokens.pop()
+    if not tokens:
+        return last
+    return f"{connector.join(tokens)}{last_connector}{last}"
+
 # endregion CLI

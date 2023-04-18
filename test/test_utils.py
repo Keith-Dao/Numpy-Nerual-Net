@@ -12,6 +12,7 @@ from src.utils import (
     check_type,
     flatten,
     is_yes,
+    join_with_different_last,
     logits_to_prediction,
     normalise_image,
     one_hot_encode,
@@ -303,3 +304,28 @@ class TestIsYes:
         response_iter = iter(responses)
         monkeypatch.setattr('builtins.input', lambda _: next(response_iter))
         assert is_yes("INVALID") is expected
+
+
+class TestWithDifferentLast:
+    """
+    Join with different last tester.
+    """
+    @pytest.mark.parametrize("tokens, connector, last_connector, expected", [
+        (["a", "b", "c"], ",", ".", "a,b.c"),
+        (["a"], ",", ".", "a"),
+        (["a", "b"], ",", ".", "a.b"),
+        ([], ",", ".", ""),
+    ])
+    def test_join_with_different_last(
+        self,
+        tokens,
+        connector,
+        last_connector,
+        expected
+    ):
+        """
+        Test the join_with_different_last method.
+        """
+        assert join_with_different_last(
+            tokens, connector, last_connector
+        ) == expected
