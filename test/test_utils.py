@@ -11,6 +11,7 @@ import pytest
 from src.utils import (
     check_type,
     flatten,
+    is_yes,
     logits_to_prediction,
     normalise_image,
     one_hot_encode,
@@ -269,3 +270,36 @@ class TestCheckType:
 
         with pytest.raises(exception):
             check_type(value, types, "test")
+
+
+class TestIsYes:
+    """
+    Is yes tester.
+    """
+    @pytest.mark.parametrize("response, expected", [
+        ("y", True),
+        ("Y", True),
+        ("n", False),
+        ("N", False)
+    ])
+    def test_is_yes(self, response, expected):
+        """
+        Test the yes no prompt with valid responses.
+        """
+        assert is_yes(response) is expected
+
+    @pytest.mark.parametrize("responses, expected", [
+        ("y", True),
+        ("q209fl;y", True),
+        ("1wea42\]Y", True),
+        ("43290\t2n", False),
+        ("5325092-=N", False)
+    ])
+    def test_is_yes_retry(self, responses, expected, monkeypatch):
+        """
+        Test the yes no prompt with invalid characters that lead to a valid
+        response.
+        """
+        response_iter = iter(responses)
+        monkeypatch.setattr('builtins.input', lambda _: next(response_iter))
+        assert is_yes("INVALID") is expected

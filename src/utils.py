@@ -211,3 +211,24 @@ def check_type(
             f", got {type(value).__name__}."
         )
 # endregion Error functions
+
+
+# region CLI
+def is_yes(response: str) -> bool:  # pragma: no cover
+    """
+    Check if the response is yes. If it is not either yes or no,
+    ask again.
+
+    Args:
+        response: The initial response
+
+    Returns:
+        True if the response is yes.
+    """
+    response = response.lower()
+    while response not in ["y", "n"]:
+        response = input(
+            "Please enter either y for yes or n for no: "
+        ).lower()
+    return response == "y"
+# endregion CLI
