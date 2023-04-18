@@ -4,7 +4,7 @@ train_path: # TODO: add path to training images e.g. ./data/train
 train_validation_split: 0.7
 test_path: # TODO: Add path to test images  e.g. ./data/test
 file_formats:
-  - '.jpg'
+  - .jpg
 batch_size: 128
 
 # Training
@@ -21,6 +21,11 @@ train_metrics:
   - precision
   - recall
 validation_metrics:
+  - loss
+  - accuracy
+  - precision
+  - recall
+test_metrics:
   - loss
   - accuracy
   - precision

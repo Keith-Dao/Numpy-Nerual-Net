@@ -113,67 +113,65 @@ def get_model(config: dict[str, Any]) -> model.Model:
 # endregion Load model
 
 
-# region Load image loader
+# region Image loader
 def get_image_loader(
-    config: dict[str, Any]
+    config: dict[str, Any],
+    dataset: str
 ) -> image_loader.ImageLoader | None:
     """
     Creates an image loader.
 
     Args:
         config: The configuration values from the config file
+        dataset: The dataset to load
 
     Returns:
         An image loader for the training data, if the data is provided.
         Else, None is returned.
     """
-    if config.get("train_path") is None:
+    if config.get(f"{dataset}_path") is None:
         utils.print_warning(
-            "No value for train_path was provided. Skipping training."
+            f"No value for {dataset}_path was provided. Skipping {dataset}ing."
         )
         return None
 
-    if config.get("train_validation_split") is None:
+    if dataset == "train" and config.get("train_validation_split") is None:
         utils.print_warning(
             "No value for train_validation_split was provided."
             " Defaulting to 0.7."
         )
-        train_validation_split = 0.7
-    else:
-        train_validation_split = config["train_validation_split"]
+    train_validation_split = config.get("train_validation_split", 0.7)
 
     if config.get("file_formats") is None:
         utils.print_warning(
             "No value for file_formats was provided."
             " Defaulting to only accept .png"
         )
-        file_formats = [".png"]
-    else:
-        file_formats = config["file_formats"]
+    file_formats = config.get("file_formats", [".png"])
 
     return image_loader.ImageLoader(
-        config["train_path"],
+        config[f"{dataset}_path"],
         [
             utils.image_to_array,
             utils.normalise_image,
             utils.flatten
         ],
         file_formats,
-        train_validation_split,
+        train_validation_split if dataset == "train" else 0,
     )
-# endregion Load image loader
+# endregion Image loader
 
 
 # region Train
 def train_model(
-    model: model.Model,
+    model_: model.Model,
     config: dict[str, Any]
 ) -> bool:
     """
     Train the model based on the config values.
 
     Args:
-        model: The model to train
+        model_: The model to train
         config: The configuration values from the config file
 
     Returns:
@@ -202,16 +200,14 @@ def train_model(
     # Batch size
     if config.get("batch_size") is None:
         utils.print_warning("Value of batch_size not found, defaulting to 1.")
-        batch_size = 1
-    else:
-        batch_size = config["batch_size"]
+    batch_size = config.get("batch_size", 1)
 
     # Training images
-    loader = get_image_loader(config)
+    loader = get_image_loader(config, "train")
     if loader is None:
         return False
 
-    model.train(
+    model_.train(
         loader,
         learning_rate,
         batch_size,
@@ -228,14 +224,8 @@ def prompt_save(model: model.Model) -> None:
     """
     readline.set_auto_history(True)
 
-    def is_yes(response: str) -> bool:
-        while response not in ["y", "n"]:
-            response = input(
-                "Please enter either y for yes or n for no: ").lower()
-        return response == "y"
-
     response = input("Would you like to save the model? [y/n]: ").lower()
-    if not is_yes(response):
+    if not utils.is_yes(response):
         return
 
     def get_path_input(message: str) -> pathlib.Path:
@@ -262,7 +252,7 @@ def prompt_save(model: model.Model) -> None:
                 "The current file already exists. Would you like to overwrite"
                 " it? [y/n]: "
             )
-            return is_yes(response)
+            return utils.is_yes(response)
 
         return True
 
@@ -281,6 +271,34 @@ def prompt_save(model: model.Model) -> None:
 # endregion Save prompt
 
 
+# region Test
+def test_model(model_: model.Model, config: dict[str, Any]) -> None:
+    test_image_loader = get_image_loader(config, "test")
+    if test_image_loader is None:
+        return
+
+    if (config.get("test_metrics") or []) == []:
+        utils.print_warning(
+            "No metrics were provided in test_metrics. Skipping testing."
+        )
+        return
+    utils.check_type(config["test_metrics"], (list), "test_metrics")
+    metric_history = model.Model.metrics_list_to_dict(config["test_metrics"])
+
+    if config.get("batch_size") is None:
+        utils.print_warning("Value of batch_size not found, defaulting to 1.")
+    batch_size = config.get("batch_size", 1)
+
+    test_loss, confusion_matrix = model_.inference(
+        test_image_loader("test", batch_size),
+        len(test_image_loader.classes),
+        "Testing"
+    )
+    model.Model.store_metrics(metric_history, confusion_matrix, test_loss)
+    model.Model.print_metrics(metric_history, test_image_loader.classes)
+# endregion Test
+
+
 def main():
     """
     Sets up the environment based on the config file.
@@ -292,11 +310,12 @@ def main():
     Prompts the user with saving the model.
     """
     config = get_config()
-    model = get_model(config)
-    trained = train_model(model, config)
+    model_ = get_model(config)
+    trained = train_model(model_, config)
     if trained:
-        model.display_history_graphs()
-        prompt_save(model)
+        model_.display_history_graphs()
+        prompt_save(model_)
+    test_model(model_, config)
 
 
 if __name__ == "__main__":

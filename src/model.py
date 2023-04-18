@@ -154,10 +154,7 @@ class Model:
         if isinstance(train_metrics, dict):
             self._train_metrics = train_metrics
         else:
-            self._train_metrics = {
-                metric: []
-                for metric in train_metrics
-            }
+            self._train_metrics = Model.metrics_list_to_dict(train_metrics)
 
         if any(
             metric != "loss" and not hasattr(metrics, metric)
@@ -175,7 +172,7 @@ class Model:
             )
     # endregion Train metrics
 
-    # region Train metrics
+    # region Validation metrics
     @property
     def validation_metrics(self) -> dict[str, list[float]]:
         """
@@ -194,10 +191,9 @@ class Model:
         if isinstance(validation_metrics, dict):
             self._validation_metrics = validation_metrics
         else:
-            self._validation_metrics = {
-                metric: []
-                for metric in validation_metrics
-            }
+            self._validation_metrics = Model.metrics_list_to_dict(
+                validation_metrics
+            )
 
         if any(
             metric != "loss" and not hasattr(metrics, metric)
@@ -213,7 +209,7 @@ class Model:
             raise ValueError(
                 "All validation metric histories must be a list."
             )
-    # endregion Train metrics
+    # endregion Validation metrics
     # endregion Properties
 
     # region Load
@@ -384,6 +380,41 @@ class Model:
             labels
         )
         return self.loss(logits, labels)
+
+    def inference(
+        self,
+        data_loader: image_loader.DatasetIterator,
+        num_classes: int,
+        tqdm_description: str = ""
+    ) -> tuple[float, NDArray]:
+        """
+        Perform inference on the model with the given data loader.
+
+        Args:
+            data_loader: Loader with data to perform inference on
+            num_classes: The number of classes in the dataset
+            tqdm_description: The description to display on the progress bar
+
+        Returns:
+            The mean loss and confusion matrix of the inference results.
+        """
+        self.eval = True
+        confusion_matrix = metrics.get_new_confusion_matrix(
+            num_classes
+        )
+        loss = sum(
+            self.get_loss_with_confusion_matrix(
+                data,
+                confusion_matrix,
+                labels
+            )
+            for data, labels in tqdm(
+                data_loader,
+                desc=tqdm_description
+            )
+        ) / len(data_loader)
+        self.eval = False
+        return loss, confusion_matrix
     # endregion Forward pass
 
     # region Train
@@ -453,38 +484,60 @@ class Model:
                 )
             )
             training_loss = total_training_loss / len(training_data)
-            self.store_metrics("train", confusion_matrix, training_loss)
-            self.print_metrics("train")
+            Model.store_metrics(
+                self.train_metrics,
+                confusion_matrix,
+                training_loss
+            )
+            Model.print_metrics(
+                self.train_metrics,
+                self.classes
+            )
 
             # Validation
             validation_data = data_loader("test", batch_size=batch_size)
             if len(validation_data) == 0:
                 continue
 
-            self.eval = True
-            confusion_matrix = metrics.get_new_confusion_matrix(num_classes)
-            total_validation_loss = sum(
-                self.get_loss_with_confusion_matrix(
-                    data,
-                    confusion_matrix,
-                    labels
-                )
-                for data, labels in tqdm(
-                    validation_data,
-                    desc=f"Validating epoch {epoch}/{epochs}"
-                )
+            validation_loss, confusion_matrix = self.inference(
+                validation_data,
+                num_classes,
+                f"Validation epoch {epoch}/{epochs}"
             )
-            validation_loss = total_validation_loss / len(validation_data)
-            self.store_metrics("validation", confusion_matrix, validation_loss)
-            self.print_metrics("validation")
-            self.eval = False
+            Model.store_metrics(
+                self.validation_metrics,
+                confusion_matrix,
+                validation_loss
+            )
+            Model.print_metrics(
+                self.validation_metrics,
+                self.classes
+            )
         self.total_epochs += epochs
     # endregion Train
 
     # region Metrics
+    @staticmethod
+    def metrics_list_to_dict(metrics_: list[str]) -> dict[str, list]:
+        """
+        Convert a list of metrics to a dictionary to store the metric
+        history.
+
+        Args:
+            metrics_: The metrics to store
+
+        Returns:
+            A dictionary to store the history of each metric that
+            need to be stored.
+        """
+        return {
+            metric: []
+            for metric in metrics_
+        }
+
+    @staticmethod
     def store_metrics(
-        self,
-        dataset: str,
+        metrics_: dict[str, list],
         confusion_matrix: NDArray,
         loss: float
     ) -> None:  # pragma: no cover
@@ -492,11 +545,10 @@ class Model:
         Store the metrics.
 
         Args:
-            dataset: The metric's dataset
+            metrics_: The dictionary storing the metrics history
             confusion_matrix: The confusion matrix to use for the metrics
             loss: The loss
         """
-        metrics_ = getattr(self, f"{dataset}_metrics")
         for metric in metrics_.keys():
             metrics_[metric].append(
                 loss
@@ -504,18 +556,19 @@ class Model:
                 else getattr(metrics, metric)(confusion_matrix).tolist()
             )
 
-    def print_metrics(self, dataset: str) -> None:  # pragma: no cover
+    @staticmethod
+    def print_metrics(
+        metrics_: dict[str, list],
+        classes: list[str]
+    ) -> None:  # pragma: no cover
         """
         Print the tracked metrics.
 
         Args:
-            dataset: The metric's dataset
+            metrics_: The dictionary storing the metrics history
+            classes: The classes of the dataset
         """
-        if self.classes is None:
-            raise ValueError("Cannot print metrics without classes.")
-
-        metrics_ = getattr(self, f"{dataset}_metrics")
-        multiclass_headers, multiclass_data = ["Class"], [self.classes]
+        multiclass_headers, multiclass_data = ["Class"], [classes]
         singular_headers, singular_data = [], []
 
         for metric in metrics_:
@@ -535,8 +588,7 @@ class Model:
                 [singular_data],
                 headers=singular_headers,
                 floatfmt=float_format
-            ))
-            print()
+            ), end="\n\n")
 
         if len(multiclass_headers) > 1:
             multiclass_data = list(zip(*multiclass_data))
@@ -544,8 +596,7 @@ class Model:
                 multiclass_data,
                 headers=multiclass_headers,
                 floatfmt=float_format
-            ))
-            print()
+            ), end="\n\n")
     # endregion Metrics
 
     # region Visualisation
@@ -559,7 +610,7 @@ class Model:
         Plot the metric.
 
         Args:
-            dataset: The metric's dataset
+            dataset: The dataset type to plot
             metric: The metric to plot
             axis: The axis to plot the metric on
         """
@@ -609,12 +660,28 @@ class Model:
         Args:
             classes: The classes that are being displayed
         """
-        for metric in (
-            set(self.train_metrics.keys()) |
-            set(self.validation_metrics.keys())
-        ):
+        visualizable_metrics = (
+            (
+                set(self.train_metrics.keys())
+                | set(self.validation_metrics.keys())
+            )
+            & metrics.SINGLE_VALUE_METRICS
+        )
+        for metric in visualizable_metrics:
             self._generate_history_graph(metric)
-        plt.show()
+
+        graphed_metrics = utils.join_with_different_last(
+            visualizable_metrics,
+            ", ",
+            " and "
+        )
+        show_graph = input(
+            "Would you like to view the history graphs for"
+            f" {graphed_metrics}? [y/n]: "
+        )
+        if utils.is_yes(show_graph):
+            plt.show()
+        plt.close("all")
     # endregion Visualisation
 
     # region Built-ins
