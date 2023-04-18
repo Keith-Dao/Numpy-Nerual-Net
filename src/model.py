@@ -384,6 +384,41 @@ class Model:
             labels
         )
         return self.loss(logits, labels)
+
+    def inference(
+        self,
+        data_loader: image_loader.DatasetIterator,
+        num_classes: int,
+        tqdm_description: str = ""
+    ) -> tuple[float, NDArray]:
+        """
+        Perform inference on the model with the given data loader.
+
+        Args:
+            data_loader: Loader with data to perform inference on
+            num_classes: The number of classes in the dataset
+            tqdm_description: The description to display on the progress bar
+
+        Returns:
+            The mean loss and confusion matrix of the inference results.
+        """
+        self.eval = True
+        confusion_matrix = metrics.get_new_confusion_matrix(
+            num_classes
+        )
+        loss = sum(
+            self.get_loss_with_confusion_matrix(
+                data,
+                confusion_matrix,
+                labels
+            )
+            for data, labels in tqdm(
+                data_loader,
+                desc=tqdm_description
+            )
+        ) / len(data_loader)
+        self.eval = False
+        return loss, confusion_matrix
     # endregion Forward pass
 
     # region Train
@@ -461,23 +496,14 @@ class Model:
             if len(validation_data) == 0:
                 continue
 
-            self.eval = True
-            confusion_matrix = metrics.get_new_confusion_matrix(num_classes)
-            total_validation_loss = sum(
-                self.get_loss_with_confusion_matrix(
-                    data,
-                    confusion_matrix,
-                    labels
-                )
-                for data, labels in tqdm(
-                    validation_data,
-                    desc=f"Validating epoch {epoch}/{epochs}"
-                )
+            validation_loss, confusion_matrix = self.inference(
+                validation_data,
+                num_classes,
+                f"Validation epoch {epoch}/{epochs}"
             )
-            validation_loss = total_validation_loss / len(validation_data)
+            self.eval = False
             self.store_metrics("validation", confusion_matrix, validation_loss)
             self.print_metrics("validation")
-            self.eval = False
         self.total_epochs += epochs
     # endregion Train
 
