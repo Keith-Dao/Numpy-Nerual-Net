@@ -611,7 +611,7 @@ class Model:
         Plot the metric.
 
         Args:
-            dataset: The metric's dataset
+            dataset: The dataset type to plot
             metric: The metric to plot
             axis: The axis to plot the metric on
         """
