@@ -504,7 +504,6 @@ class Model:
                 num_classes,
                 f"Validation epoch {epoch}/{epochs}"
             )
-            self.eval = False
             Model.store_metrics(
                 self.validation_metrics,
                 confusion_matrix,
