@@ -172,7 +172,7 @@ class Model:
             )
     # endregion Train metrics
 
-    # region Train metrics
+    # region Validation metrics
     @property
     def validation_metrics(self) -> dict[str, list[float]]:
         """
@@ -209,7 +209,7 @@ class Model:
             raise ValueError(
                 "All validation metric histories must be a list."
             )
-    # endregion Train metrics
+    # endregion Validation metrics
     # endregion Properties
 
     # region Load
