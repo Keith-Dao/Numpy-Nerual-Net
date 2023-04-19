@@ -647,7 +647,7 @@ class Model:
         self._plot_metric("train", metric, axis)
         self._plot_metric("validation", metric, axis)
 
-        axis.legend(loc="upper right")
+        axis.legend()
         axis.set_xlabel("Epoch")
         axis.xaxis.set_major_locator(MaxNLocator(integer=True))
         axis.set_xlim(0, self.total_epochs + 1)
