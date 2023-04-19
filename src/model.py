@@ -9,6 +9,7 @@ from types import ModuleType
 from typing import Any
 
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 from numpy.typing import NDArray
 from tabulate import tabulate
 from tqdm import tqdm
@@ -648,10 +649,13 @@ class Model:
 
         axis.legend(loc="upper right")
         axis.set_xlabel("Epoch")
+        axis.xaxis.set_major_locator(MaxNLocator(integer=True))
+        axis.set_xlim(0, self.total_epochs + 1)
+
         metric_name = " ".join(metric.split("_")).capitalize()
         axis.set_title(metric_name)
         axis.set_ylabel(metric_name)
-        axis.set_xticks(range(1, self.total_epochs + 1))
+        axis.grid(which="major", alpha=0.5)
 
     def display_history_graphs(self) -> None:  # pragma: no cover
         """
