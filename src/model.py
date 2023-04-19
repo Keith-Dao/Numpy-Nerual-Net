@@ -626,7 +626,7 @@ class Model:
         axis.plot(
             range(1, self.total_epochs + 1),
             metrics_[metric],
-            "-",
+            ".-",
             label=dataset.capitalize()
         )
 
