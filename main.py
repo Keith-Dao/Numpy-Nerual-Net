@@ -77,6 +77,67 @@ def get_config() -> dict[str, Any]:
         encoding=sys.getdefaultencoding()
     ) as file:
         return yaml.safe_load(file)
+
+
+def get_train_validation_split(
+    config: dict[str, Any],
+    dataset: str
+) -> float:
+    """
+    Get the train validation split in the config file.
+
+    Args:
+        config: The configuration values from the config file
+        dataset: The dataset to load
+
+    Returns:
+        The train validation split or 0 if the dataset is test.
+    """
+    if dataset == "test":
+        return 0
+
+    if config.get("train_validation_split") is None:
+        utils.print_warning(
+            "No value for train_validation_split was provided."
+            " Defaulting to 0.7."
+        )
+        return 0.7
+    return config["train_validation_split"]
+
+
+def get_file_formats(config: dict[str, Any]) -> list[str]:
+    """
+    Get the file formats listed in the config file.
+
+    Args:
+        config: The configuration values from the config file
+
+    Returns:
+        The list of valid file formats.
+    """
+    if config.get("file_formats") is None:
+        utils.print_warning(
+            "No value for file_formats was provided."
+            " Defaulting to only accept .png"
+        )
+        return [".png"]
+    return config["file_formats"]
+
+
+def get_batch_size(config: dict[str, Any]) -> int:
+    """
+    Get the batch size from the config file.
+
+    Args:
+        config: The configuration values from the config file
+
+    Returns:
+        The batch size.
+    """
+    if config.get("batch_size") is None:
+        utils.print_warning("Value of batch_size not found, defaulting to 1.")
+        return 1
+    return config["batch_size"]
 # endregion Parse config
 
 
@@ -98,6 +159,7 @@ def get_model(config: dict[str, Any]) -> model.Model:
         return model.Model.load(model_path)
 
     # Load the default model
+    utils.print_warning("No model file was provided. Loading untrained model.")
     layers = [
         linear.Linear(784, 250, activation=act.ReLU),
         linear.Linear(250, 250, activation=act.ReLU),
@@ -135,25 +197,14 @@ def get_image_loader(
         )
         return None
 
-    if dataset == "train" and config.get("train_validation_split") is None:
-        utils.print_warning(
-            "No value for train_validation_split was provided."
-            " Defaulting to 0.7."
-        )
-    train_validation_split = config.get("train_validation_split", 0.7)
-
-    if config.get("file_formats") is None:
-        utils.print_warning(
-            "No value for file_formats was provided."
-            " Defaulting to only accept .png"
-        )
-    file_formats = config.get("file_formats", [".png"])
+    train_validation_split = get_train_validation_split(config, dataset)
+    file_formats = get_file_formats(config)
 
     return image_loader.ImageLoader(
         config[f"{dataset}_path"],
         image_loader.ImageLoader.STANDARD_PREPROCESSING,
         file_formats,
-        train_validation_split if dataset == "train" else 0,
+        train_validation_split,
     )
 # endregion Image loader
 
@@ -194,9 +245,7 @@ def train_model(
         raise ValueError("learning_rate must be greater than 0.")
 
     # Batch size
-    if config.get("batch_size") is None:
-        utils.print_warning("Value of batch_size not found, defaulting to 1.")
-    batch_size = config.get("batch_size", 1)
+    batch_size = get_batch_size(config)
 
     # Training images
     loader = get_image_loader(config, "train")
@@ -214,19 +263,22 @@ def train_model(
 
 
 # region Save prompt
-def prompt_save(model: model.Model) -> None:
+def prompt_save(model_: model.Model) -> None:
     """
     Prompt model save.
+
+    Args:
+        model_: The model to save
     """
     response = input("Would you like to save the model? [y/n]: ").lower()
     if not utils.is_yes(response):
         return
 
     def is_valid_path(path: pathlib.Path) -> bool:
-        if path.suffix not in model.SAVE_METHODS.keys():
+        if path.suffix not in model_.SAVE_METHODS.keys():
             utils.print_error(
                 f"File format \"{save_path.suffix}\" is not supported."
-                f" Select from {' or '.join(model.SAVE_METHODS.keys())}."
+                f" Select from {' or '.join(model_.SAVE_METHODS.keys())}."
             )
             return False
 
@@ -242,20 +294,27 @@ def prompt_save(model: model.Model) -> None:
     save_path = utils.get_path_input(
         "Where would you like to save the model file?"
         " Enter a file path with the one of the following extensions"
-        f" ({', '.join(model.SAVE_METHODS.keys())}): "
+        f" ({', '.join(model_.SAVE_METHODS.keys())}): "
     )
     while not is_valid_path(save_path):
         save_path = utils.get_path_input(
             "Please enter the location to save the model file: "
         )
     save_path.parent.mkdir(parents=True, exist_ok=True)
-    model.save(save_path)
+    model_.save(save_path)
     print(f"Model successfully saved at {save_path.resolve()}.")
 # endregion Save prompt
 
 
 # region Test
 def test_model(model_: model.Model, config: dict[str, Any]) -> None:
+    """
+    Tests the model, if a test set is provided.
+
+    Args:
+        model_: The model to test
+        config: The configuration values from the config file
+    """
     test_image_loader = get_image_loader(config, "test")
     if test_image_loader is None:
         return
@@ -268,9 +327,7 @@ def test_model(model_: model.Model, config: dict[str, Any]) -> None:
     utils.check_type(config["test_metrics"], (list), "test_metrics")
     metric_history = model.Model.metrics_list_to_dict(config["test_metrics"])
 
-    if config.get("batch_size") is None:
-        utils.print_warning("Value of batch_size not found, defaulting to 1.")
-    batch_size = config.get("batch_size", 1)
+    batch_size = get_batch_size(config)
 
     test_loss, confusion_matrix = model_.test(
         test_image_loader("test", batch_size),
