@@ -151,11 +151,7 @@ def get_image_loader(
 
     return image_loader.ImageLoader(
         config[f"{dataset}_path"],
-        [
-            utils.image_to_array,
-            utils.normalise_image,
-            utils.flatten
-        ],
+        image_loader.ImageLoader.STANDARD_PREPROCESSING,
         file_formats,
         train_validation_split if dataset == "train" else 0,
     )
