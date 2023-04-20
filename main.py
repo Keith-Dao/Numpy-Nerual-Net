@@ -360,7 +360,24 @@ def test_model(model_: model.Model, config: dict[str, Any]) -> None:
 # endregion Test
 
 
+# region Train and test
+def train_and_test(model_: model.Model, config: dict[str, Any]) -> None:
+    """
+    Train and test the model.
+
+    Args:
+        model_: The model to train and test
+        config: The configuration values from the config file
+    """
+    if train_model(model_, config):
+        model_.display_history_graphs()
+        prompt_save(model_)
+    test_model(model_, config)
+# endregion Train and test
+
 # region Predict
+
+
 def start_prediction(
     model_: model.Model,
     config: dict[str, Any]
@@ -425,11 +442,8 @@ def main():
     args = get_args()
     config = get_config(args.config_file)
     model_ = get_model(config)
-    trained = train_model(model_, config)
-    if trained:
-        model_.display_history_graphs()
-        prompt_save(model_)
-    test_model(model_, config)
+    if not args.prediction_mode:
+        train_and_test(model_, config)
     start_prediction(model_, config)
 
 
