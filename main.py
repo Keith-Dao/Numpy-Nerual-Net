@@ -289,7 +289,7 @@ def test_model(model_: model.Model, config: dict[str, Any]) -> None:
         utils.print_warning("Value of batch_size not found, defaulting to 1.")
     batch_size = config.get("batch_size", 1)
 
-    test_loss, confusion_matrix = model_.inference(
+    test_loss, confusion_matrix = model_.test(
         test_image_loader("test", batch_size),
         len(test_image_loader.classes),
         "Testing"
