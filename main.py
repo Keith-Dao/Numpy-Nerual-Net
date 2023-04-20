@@ -350,6 +350,57 @@ def test_model(model_: model.Model, config: dict[str, Any]) -> None:
 # endregion Test
 
 
+# region Predict
+def start_prediction(
+    model_: model.Model,
+    config: dict[str, Any]
+) -> None:
+    """
+    Start mode that allows users to choose files to predict with the model.
+
+    Args:
+        model_: The model to use to predict
+        config: The configuration values from the config file
+    """
+    if model_.classes is None:
+        utils.print_error(
+            "Prediction is not available for untrained models. Please train"
+            " the model first or load a pre-trained model."
+        )
+        return
+
+    if not utils.is_yes(input("Would you like to predict images? [y/n]: ")):
+        return
+
+    model_.eval = True
+    file_formats = get_file_formats(config)
+    preprocessing = image_loader.ImageLoader.STANDARD_PREPROCESSING
+    stop_code = "QUIT"
+    while True:
+        filepath = utils.get_path_input(
+            f"Please enter the path to the image or {stop_code} to exit: ",
+            stop_code
+        )
+        if filepath is None:
+            break
+
+        if filepath.suffix not in file_formats:
+            utils.print_error("Invalid file format.")
+            continue
+
+        data = filepath
+        for preprocess in preprocessing:
+            data = preprocess(data)
+
+        prediction = model_.predict(
+            data  # pyright: ignore [reportGeneralTypeIssues]
+        )[0]
+        print(f"Predicted: {prediction}")
+
+    model_.eval = False
+# endregion Predict
+
+
 def main():
     """
     Sets up the environment based on the config file.
@@ -368,6 +419,7 @@ def main():
         model_.display_history_graphs()
         prompt_save(model_)
     test_model(model_, config)
+    start_prediction(model_, config)
 
 
 if __name__ == "__main__":
