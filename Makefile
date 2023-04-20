@@ -23,5 +23,5 @@ install-test: test_requirements.txt
 
 test: install-test
 	pytest -v --cov=src --cov-report term-missing
-	flake8 src/
-	pylint src/
+	flake8 src/ main.py
+	pylint src/ main.py
