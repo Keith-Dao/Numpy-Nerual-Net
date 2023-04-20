@@ -39,14 +39,15 @@ class DefaultConfigPathAction(argparse.Action):
         setattr(namespace, self.dest, values)
 
 
-def get_config_filepath() -> str:
+def get_args() -> argparse.Namespace:
     """
-    Gets the config filepath.
+    Gets the parsed args.
 
     Args:
         default_config_path: The config path to use if none is provided
+
     Returns:
-        The config filepath.
+        The command line args.
     """
     parser = argparse.ArgumentParser(
         prog="Neural Net",
@@ -58,21 +59,30 @@ def get_config_filepath() -> str:
         nargs="?",
         action=DefaultConfigPathAction
     )
+    parser.add_argument(
+        "-p",
+        "--prediction-mode",
+        help="Skip to the prediction mode.",
+        action="store_true"
+    )
 
-    return getattr(parser.parse_args(), "config_file")
+    return parser.parse_args()
 # endregion Argparse
 
 
 # region Parse config
-def get_config() -> dict[str, Any]:
+def get_config(config_path: str) -> dict[str, Any]:
     """
     Get the config values from the config file.
+
+    Args:
+        config_path: Path to the config file.
 
     Returns:
         A dictionary with the parsed config files.
     """
     with open(
-        pathlib.Path(get_config_filepath()),
+        pathlib.Path(config_path),
         "r",
         encoding=sys.getdefaultencoding()
     ) as file:
@@ -412,7 +422,8 @@ def main():
     Prompts the user with saving the model.
     """
     readline.set_auto_history(True)
-    config = get_config()
+    args = get_args()
+    config = get_config(args.config_file)
     model_ = get_model(config)
     trained = train_model(model_, config)
     if trained:
