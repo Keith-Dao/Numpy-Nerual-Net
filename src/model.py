@@ -288,7 +288,8 @@ class Model:
         Attributes:
             - layers -- list of the serialised layers in sequential order
             - loss -- the loss function for the model
-            - epochs -- the total number of epochs the model has trained for
+            - total_epochs -- the total number of epochs the model has trained
+                for
             - train_metrics -- the history of the training metrics for the
                 model
             - validation_metrics -- the history of the validation metrics for
@@ -304,7 +305,7 @@ class Model:
                 for layer in self.layers
             ],
             "loss": self.loss.to_dict(),
-            "epochs": self.total_epochs,
+            "total_epochs": self.total_epochs,
             "train_metrics": self.train_metrics,
             "validation_metrics": self.validation_metrics,
             "classes": self.classes
