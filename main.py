@@ -277,7 +277,7 @@ def prompt_save(model_: model.Model) -> None:
     def is_valid_path(path: pathlib.Path) -> bool:
         if path.suffix not in model_.SAVE_METHODS.keys():
             utils.print_error(
-                f"File format \"{save_path.suffix}\" is not supported."
+                f"File format \"{path.suffix}\" is not supported."
                 f" Select from {' or '.join(model_.SAVE_METHODS.keys())}."
             )
             return False
@@ -291,15 +291,26 @@ def prompt_save(model_: model.Model) -> None:
 
         return True
 
-    save_path = utils.get_path_input(
-        "Where would you like to save the model file?"
-        " Enter a file path with the one of the following extensions"
-        f" ({', '.join(model_.SAVE_METHODS.keys())}): "
+    stop_code = "CANCEL"
+    extensions = utils.join_with_different_last(
+        model_.SAVE_METHODS.keys(),
+        ", ",
+        " or "
     )
-    while not is_valid_path(save_path):
-        save_path = utils.get_path_input(
-            "Please enter the location to save the model file: "
-        )
+    enter_path_prompt = (
+        "Enter a file path with the one of the following extensions"
+        f" ({extensions}) or type {stop_code} to cancel saving: "
+    )
+    save_path = utils.get_path_input(
+        f"Where would you like to save the model file? {enter_path_prompt}",
+        stop_code
+    )
+    while save_path is not None and not is_valid_path(save_path):
+        save_path = utils.get_path_input(enter_path_prompt, stop_code)
+    if save_path is None:
+        print("Model was not saved.")
+        return
+
     save_path.parent.mkdir(parents=True, exist_ok=True)
     model_.save(save_path)
     print(f"Model successfully saved at {save_path.resolve()}.")
