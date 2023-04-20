@@ -381,6 +381,25 @@ class Model:
             labels
         )
         return self.loss(logits, labels)
+
+    def predict(self, input_: NDArray) -> list[str]:
+        """
+        Using the provided input, predict the classes.
+
+        Args:
+            input_: The input values to the model
+
+        Returns:
+            The predicted classes.
+        """
+        if self.classes is None:
+            raise ValueError("Model is missing the classes.")
+
+        logits = self(input_)
+        return [
+            self.classes[label]
+            for label in utils.logits_to_prediction(logits)
+        ]
     # endregion Forward pass
 
     # region Train
