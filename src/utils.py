@@ -3,6 +3,7 @@ This module contains various utility functions.
 """
 from collections.abc import Iterable
 import pathlib
+import readline
 from typing import Any, Type
 
 import colorama
@@ -233,6 +234,37 @@ def is_yes(response: str) -> bool:  # pragma: no cover
     return response == "y"
 
 
+def get_path_input(
+    message: str,
+    stop_code: str | None = None
+) -> pathlib.Path | None:  # pragma: no cover
+    """
+    Set up the terminal to autocomplete paths and get the file path
+    from the input.
+
+    Args:
+        message: Message to display to prompt for the path
+        stop_code: The input for the user to exit this prompt
+
+    Returns:
+        The inputted path.
+    """
+    # Set path auto complete
+    readline.set_completer_delims(" \t\n=")
+    readline.parse_and_bind("tab: complete")
+    path = input(message)
+    if path == stop_code:
+        return None
+    path = pathlib.Path(path)
+
+    # Reset to default
+    readline.set_completer_delims(readline.get_completer_delims())
+    readline.parse_and_bind('tab: self-insert')
+    return path
+# endregion CLI
+
+
+# region String functions
 def join_with_different_last(
     tokens: Iterable[str],
     connector: str,
@@ -258,5 +290,4 @@ def join_with_different_last(
     if not tokens:
         return last
     return f"{connector.join(tokens)}{last_connector}{last}"
-
-# endregion CLI
+# endregion String functions

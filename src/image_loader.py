@@ -98,6 +98,12 @@ class ImageLoader:
     Image loader.
     """
 
+    STANDARD_PREPROCESSING: list[Callable[..., NDArray]] = [
+        utils.image_to_array,
+        utils.normalise_image,
+        utils.flatten
+    ]
+
     def __init__(
         self,
         folder_path: str,

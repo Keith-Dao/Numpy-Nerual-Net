@@ -39,14 +39,15 @@ class DefaultConfigPathAction(argparse.Action):
         setattr(namespace, self.dest, values)
 
 
-def get_config_filepath() -> str:
+def get_args() -> argparse.Namespace:
     """
-    Gets the config filepath.
+    Gets the parsed args.
 
     Args:
         default_config_path: The config path to use if none is provided
+
     Returns:
-        The config filepath.
+        The command line args.
     """
     parser = argparse.ArgumentParser(
         prog="Neural Net",
@@ -58,25 +59,95 @@ def get_config_filepath() -> str:
         nargs="?",
         action=DefaultConfigPathAction
     )
+    parser.add_argument(
+        "-p",
+        "--prediction-mode",
+        help="Skip to the prediction mode.",
+        action="store_true"
+    )
 
-    return getattr(parser.parse_args(), "config_file")
+    return parser.parse_args()
 # endregion Argparse
 
 
 # region Parse config
-def get_config() -> dict[str, Any]:
+def get_config(config_path: str) -> dict[str, Any]:
     """
     Get the config values from the config file.
+
+    Args:
+        config_path: Path to the config file.
 
     Returns:
         A dictionary with the parsed config files.
     """
     with open(
-        pathlib.Path(get_config_filepath()),
+        pathlib.Path(config_path),
         "r",
         encoding=sys.getdefaultencoding()
     ) as file:
         return yaml.safe_load(file)
+
+
+def get_train_validation_split(
+    config: dict[str, Any],
+    dataset: str
+) -> float:
+    """
+    Get the train validation split in the config file.
+
+    Args:
+        config: The configuration values from the config file
+        dataset: The dataset to load
+
+    Returns:
+        The train validation split or 0 if the dataset is test.
+    """
+    if dataset == "test":
+        return 0
+
+    if config.get("train_validation_split") is None:
+        utils.print_warning(
+            "No value for train_validation_split was provided."
+            " Defaulting to 0.7."
+        )
+        return 0.7
+    return config["train_validation_split"]
+
+
+def get_file_formats(config: dict[str, Any]) -> list[str]:
+    """
+    Get the file formats listed in the config file.
+
+    Args:
+        config: The configuration values from the config file
+
+    Returns:
+        The list of valid file formats.
+    """
+    if config.get("file_formats") is None:
+        utils.print_warning(
+            "No value for file_formats was provided."
+            " Defaulting to only accept .png"
+        )
+        return [".png"]
+    return config["file_formats"]
+
+
+def get_batch_size(config: dict[str, Any]) -> int:
+    """
+    Get the batch size from the config file.
+
+    Args:
+        config: The configuration values from the config file
+
+    Returns:
+        The batch size.
+    """
+    if config.get("batch_size") is None:
+        utils.print_warning("Value of batch_size not found, defaulting to 1.")
+        return 1
+    return config["batch_size"]
 # endregion Parse config
 
 
@@ -98,6 +169,7 @@ def get_model(config: dict[str, Any]) -> model.Model:
         return model.Model.load(model_path)
 
     # Load the default model
+    utils.print_warning("No model file was provided. Loading untrained model.")
     layers = [
         linear.Linear(784, 250, activation=act.ReLU),
         linear.Linear(250, 250, activation=act.ReLU),
@@ -135,29 +207,14 @@ def get_image_loader(
         )
         return None
 
-    if dataset == "train" and config.get("train_validation_split") is None:
-        utils.print_warning(
-            "No value for train_validation_split was provided."
-            " Defaulting to 0.7."
-        )
-    train_validation_split = config.get("train_validation_split", 0.7)
-
-    if config.get("file_formats") is None:
-        utils.print_warning(
-            "No value for file_formats was provided."
-            " Defaulting to only accept .png"
-        )
-    file_formats = config.get("file_formats", [".png"])
+    train_validation_split = get_train_validation_split(config, dataset)
+    file_formats = get_file_formats(config)
 
     return image_loader.ImageLoader(
         config[f"{dataset}_path"],
-        [
-            utils.image_to_array,
-            utils.normalise_image,
-            utils.flatten
-        ],
+        image_loader.ImageLoader.STANDARD_PREPROCESSING,
         file_formats,
-        train_validation_split if dataset == "train" else 0,
+        train_validation_split,
     )
 # endregion Image loader
 
@@ -198,9 +255,7 @@ def train_model(
         raise ValueError("learning_rate must be greater than 0.")
 
     # Batch size
-    if config.get("batch_size") is None:
-        utils.print_warning("Value of batch_size not found, defaulting to 1.")
-    batch_size = config.get("batch_size", 1)
+    batch_size = get_batch_size(config)
 
     # Training images
     loader = get_image_loader(config, "train")
@@ -218,32 +273,22 @@ def train_model(
 
 
 # region Save prompt
-def prompt_save(model: model.Model) -> None:
+def prompt_save(model_: model.Model) -> None:
     """
     Prompt model save.
-    """
-    readline.set_auto_history(True)
 
+    Args:
+        model_: The model to save
+    """
     response = input("Would you like to save the model? [y/n]: ").lower()
     if not utils.is_yes(response):
         return
 
-    def get_path_input(message: str) -> pathlib.Path:
-        # Set path auto complete
-        readline.set_completer_delims(" \t\n=")
-        readline.parse_and_bind("tab: complete")
-        path = pathlib.Path(input(message))
-
-        # Reset to default
-        readline.set_completer_delims(readline.get_completer_delims())
-        readline.parse_and_bind('tab: self-insert')
-        return path
-
     def is_valid_path(path: pathlib.Path) -> bool:
-        if path.suffix not in model.SAVE_METHODS.keys():
+        if path.suffix not in model_.SAVE_METHODS.keys():
             utils.print_error(
-                f"File format \"{save_path.suffix}\" is not supported."
-                f" Select from {' or '.join(model.SAVE_METHODS.keys())}."
+                f"File format \"{path.suffix}\" is not supported."
+                f" Select from {' or '.join(model_.SAVE_METHODS.keys())}."
             )
             return False
 
@@ -256,23 +301,41 @@ def prompt_save(model: model.Model) -> None:
 
         return True
 
-    save_path = get_path_input(
-        "Where would you like to save the model file?"
-        " Enter a file path with the one of the following extensions"
-        f" ({', '.join(model.SAVE_METHODS.keys())}): "
+    stop_code = "CANCEL"
+    extensions = utils.join_with_different_last(
+        model_.SAVE_METHODS.keys(),
+        ", ",
+        " or "
     )
-    while not is_valid_path(save_path):
-        save_path = get_path_input(
-            "Please enter the location to save the model file: "
-        )
+    enter_path_prompt = (
+        "Enter a file path with the one of the following extensions"
+        f" ({extensions}) or type {stop_code} to cancel saving: "
+    )
+    save_path = utils.get_path_input(
+        f"Where would you like to save the model file? {enter_path_prompt}",
+        stop_code
+    )
+    while save_path is not None and not is_valid_path(save_path):
+        save_path = utils.get_path_input(enter_path_prompt, stop_code)
+    if save_path is None:
+        print("Model was not saved.")
+        return
+
     save_path.parent.mkdir(parents=True, exist_ok=True)
-    model.save(save_path)
+    model_.save(save_path)
     print(f"Model successfully saved at {save_path.resolve()}.")
 # endregion Save prompt
 
 
 # region Test
 def test_model(model_: model.Model, config: dict[str, Any]) -> None:
+    """
+    Tests the model, if a test set is provided.
+
+    Args:
+        model_: The model to test
+        config: The configuration values from the config file
+    """
     test_image_loader = get_image_loader(config, "test")
     if test_image_loader is None:
         return
@@ -285,11 +348,9 @@ def test_model(model_: model.Model, config: dict[str, Any]) -> None:
     utils.check_type(config["test_metrics"], (list), "test_metrics")
     metric_history = model.Model.metrics_list_to_dict(config["test_metrics"])
 
-    if config.get("batch_size") is None:
-        utils.print_warning("Value of batch_size not found, defaulting to 1.")
-    batch_size = config.get("batch_size", 1)
+    batch_size = get_batch_size(config)
 
-    test_loss, confusion_matrix = model_.inference(
+    test_loss, confusion_matrix = model_.test(
         test_image_loader("test", batch_size),
         len(test_image_loader.classes),
         "Testing"
@@ -297,6 +358,74 @@ def test_model(model_: model.Model, config: dict[str, Any]) -> None:
     model.Model.store_metrics(metric_history, confusion_matrix, test_loss)
     model.Model.print_metrics(metric_history, test_image_loader.classes)
 # endregion Test
+
+
+# region Train and test
+def train_and_test(model_: model.Model, config: dict[str, Any]) -> None:
+    """
+    Train and test the model.
+
+    Args:
+        model_: The model to train and test
+        config: The configuration values from the config file
+    """
+    if train_model(model_, config):
+        model_.display_history_graphs()
+        prompt_save(model_)
+    test_model(model_, config)
+# endregion Train and test
+
+# region Predict
+
+
+def start_prediction(
+    model_: model.Model,
+    config: dict[str, Any]
+) -> None:
+    """
+    Start mode that allows users to choose files to predict with the model.
+
+    Args:
+        model_: The model to use to predict
+        config: The configuration values from the config file
+    """
+    if model_.classes is None:
+        utils.print_error(
+            "Prediction is not available for untrained models. Please train"
+            " the model first or load a pre-trained model."
+        )
+        return
+
+    if not utils.is_yes(input("Would you like to predict images? [y/n]: ")):
+        return
+
+    model_.eval = True
+    file_formats = get_file_formats(config)
+    preprocessing = image_loader.ImageLoader.STANDARD_PREPROCESSING
+    stop_code = "QUIT"
+    while True:
+        filepath = utils.get_path_input(
+            f"Please enter the path to the image or {stop_code} to exit: ",
+            stop_code
+        )
+        if filepath is None:
+            break
+
+        if filepath.suffix not in file_formats:
+            utils.print_error("Invalid file format.")
+            continue
+
+        data = filepath
+        for preprocess in preprocessing:
+            data = preprocess(data)
+
+        prediction = model_.predict(
+            data  # pyright: ignore [reportGeneralTypeIssues]
+        )[0]
+        print(f"Predicted: {prediction}")
+
+    model_.eval = False
+# endregion Predict
 
 
 def main():
@@ -309,13 +438,13 @@ def main():
 
     Prompts the user with saving the model.
     """
-    config = get_config()
+    readline.set_auto_history(True)
+    args = get_args()
+    config = get_config(args.config_file)
     model_ = get_model(config)
-    trained = train_model(model_, config)
-    if trained:
-        model_.display_history_graphs()
-        prompt_save(model_)
-    test_model(model_, config)
+    if not args.prediction_mode:
+        train_and_test(model_, config)
+    start_prediction(model_, config)
 
 
 if __name__ == "__main__":

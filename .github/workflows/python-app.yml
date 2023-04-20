@@ -27,13 +27,13 @@ jobs:
         run: |
           . .env/bin/activate
           # stop the build if there a-re Python syntax errors or undefined names
-          flake8 src/ --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 src/ main.py --count --select=E9,F63,F7,F82 --show-source --statistics
           # exit-zero treats all errors as warnings.
-          flake8 src/ --count --exit-zero --max-complexity=10 --statistics
+          flake8 src/ main.py --count --exit-zero --max-complexity=10 --statistics
       - name: Lint with pylint
         run: |
           . .env/bin/activate
-          pylint src/
+          pylint src/ main.py
       - name: Test with pytest
         run: |
           . .env/bin/activate

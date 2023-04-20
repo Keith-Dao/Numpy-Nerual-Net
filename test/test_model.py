@@ -84,7 +84,7 @@ class TestModel:
         """
         file_path = tmp_path_factory.getbasetemp() / "true_model.json"
         with open(file_path, "w", encoding="UTF-8") as file:
-            file.write('{"class": "Model", "layers": [{"class": "Linear", "weight": [[1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0]], "bias": [1.0, 1.0, 1.0], "activation_function": "NoActivation"}, {"class": "Linear", "weight": [[1.0, 1.0, 1.0], [1.0, 1.0, 1.0]], "bias": [1.0, 1.0], "activation_function": "ReLU"}], "loss": {"class": "CrossEntropyLoss", "reduction": "sum"}, "epochs": 0, "train_metrics": {"loss": []}, "validation_metrics": {"loss": []}, "classes": ["0", "1"]}')  # noqa: E501
+            file.write('{"class": "Model", "layers": [{"class": "Linear", "weight": [[1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0]], "bias": [1.0, 1.0, 1.0], "activation_function": "NoActivation"}, {"class": "Linear", "weight": [[1.0, 1.0, 1.0], [1.0, 1.0, 1.0]], "bias": [1.0, 1.0], "activation_function": "ReLU"}], "loss": {"class": "CrossEntropyLoss", "reduction": "sum"}, "total_epochs": 0, "train_metrics": {"loss": []}, "validation_metrics": {"loss": []}, "classes": ["0", "1"]}')  # noqa: E501
         return file_path
 
     @pytest.fixture(scope="class")
@@ -97,7 +97,7 @@ class TestModel:
         """
         file_path = tmp_path_factory.getbasetemp() / "true_model.pkl"
         with open(file_path, "wb") as file:
-            file.write(b'\x80\x04\x95\xf4\x01\x00\x00\x00\x00\x00\x00}\x94(\x8c\x05class\x94\x8c\x05Model\x94\x8c\x06layers\x94]\x94(}\x94(h\x01\x8c\x06Linear\x94\x8c\x06weight\x94]\x94(]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00e]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00e]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00ee\x8c\x04bias\x94]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00e\x8c\x13activation_function\x94\x8c\x0cNoActivation\x94u}\x94(h\x01h\x06h\x07]\x94(]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00e]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00eeh\x0c]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00eh\x0e\x8c\x04ReLU\x94ue\x8c\x04loss\x94}\x94(h\x01\x8c\x10CrossEntropyLoss\x94\x8c\treduction\x94\x8c\x03sum\x94u\x8c\x06epochs\x94K\x00\x8c\rtrain_metrics\x94}\x94h\x16]\x94s\x8c\x12validation_metrics\x94}\x94h\x16]\x94s\x8c\x07classes\x94]\x94(\x8c\x010\x94\x8c\x011\x94eu.')  # noqa: E501
+            file.write(b"\x80\x04\x95\xfa\x01\x00\x00\x00\x00\x00\x00}\x94(\x8c\x05class\x94\x8c\x05Model\x94\x8c\x06layers\x94]\x94(}\x94(h\x01\x8c\x06Linear\x94\x8c\x06weight\x94]\x94(]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00e]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00e]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00ee\x8c\x04bias\x94]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00e\x8c\x13activation_function\x94\x8c\x0cNoActivation\x94u}\x94(h\x01h\x06h\x07]\x94(]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00e]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00eeh\x0c]\x94(G?\xf0\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00eh\x0e\x8c\x04ReLU\x94ue\x8c\x04loss\x94}\x94(h\x01\x8c\x10CrossEntropyLoss\x94\x8c\treduction\x94\x8c\x03sum\x94u\x8c\x0ctotal_epochs\x94K\x00\x8c\rtrain_metrics\x94}\x94h\x16]\x94s\x8c\x12validation_metrics\x94}\x94h\x16]\x94s\x8c\x07classes\x94]\x94(\x8c\x010\x94\x8c\x011\x94eu.")  # noqa: E501
         return file_path
 
     @pytest.fixture
@@ -541,7 +541,7 @@ class TestModel:
                 }
             ],
             "loss": {"class": "CrossEntropyLoss", "reduction": "sum"},
-            "epochs": 0,
+            "total_epochs": 0,
             "train_metrics": {"loss": []},
             "validation_metrics": {"loss": []},
             "classes": ["0", "1"]
@@ -803,6 +803,22 @@ class TestModel:
             atol=FLOAT_TOLERANCE
         )
     # endregion Backward pass / train tests
+
+    # region Predict tests
+    def test_predict(self, model):
+        """
+        Tests predict.
+        """
+        assert model.predict(np.array([0, 0, 0, 0])) == ["0"]
+
+    def test_predict_no_classes(self, model):
+        """
+        Tests predict when the model is missing the classes.
+        """
+        model.classes = None
+        with pytest.raises(ValueError):
+            model.predict(np.array([0, 0, 0, 0]))
+    # endregion Predict tests
 
     # region Built-ins tests
     @pytest.mark.parametrize("layers_, loss_, result", [

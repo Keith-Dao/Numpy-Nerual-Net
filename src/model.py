@@ -288,7 +288,8 @@ class Model:
         Attributes:
             - layers -- list of the serialised layers in sequential order
             - loss -- the loss function for the model
-            - epochs -- the total number of epochs the model has trained for
+            - total_epochs -- the total number of epochs the model has trained
+                for
             - train_metrics -- the history of the training metrics for the
                 model
             - validation_metrics -- the history of the validation metrics for
@@ -304,7 +305,7 @@ class Model:
                 for layer in self.layers
             ],
             "loss": self.loss.to_dict(),
-            "epochs": self.total_epochs,
+            "total_epochs": self.total_epochs,
             "train_metrics": self.train_metrics,
             "validation_metrics": self.validation_metrics,
             "classes": self.classes
@@ -382,43 +383,28 @@ class Model:
         )
         return self.loss(logits, labels)
 
-    def inference(
-        self,
-        data_loader: image_loader.DatasetIterator,
-        num_classes: int,
-        tqdm_description: str = ""
-    ) -> tuple[float, NDArray]:
+    def predict(self, input_: NDArray) -> list[str]:
         """
-        Perform inference on the model with the given data loader.
+        Using the provided input, predict the classes.
 
         Args:
-            data_loader: Loader with data to perform inference on
-            num_classes: The number of classes in the dataset
-            tqdm_description: The description to display on the progress bar
+            input_: The input values to the model
 
         Returns:
-            The mean loss and confusion matrix of the inference results.
+            The predicted classes.
         """
-        self.eval = True
-        confusion_matrix = metrics.get_new_confusion_matrix(
-            num_classes
-        )
-        loss = sum(
-            self.get_loss_with_confusion_matrix(
-                data,
-                confusion_matrix,
-                labels
-            )
-            for data, labels in tqdm(
-                data_loader,
-                desc=tqdm_description
-            )
-        ) / len(data_loader)
-        self.eval = False
-        return loss, confusion_matrix
+        if self.classes is None:
+            raise ValueError("Model is missing the classes.")
+
+        logits = self(input_)
+        return [
+            self.classes[label]
+            for label in utils.logits_to_prediction(logits)
+        ]
     # endregion Forward pass
 
     # region Train
+
     def _train_step(
         self,
         data: NDArray,
@@ -500,7 +486,7 @@ class Model:
             if len(validation_data) == 0:
                 continue
 
-            validation_loss, confusion_matrix = self.inference(
+            validation_loss, confusion_matrix = self.test(
                 validation_data,
                 num_classes,
                 f"Validation epoch {epoch}/{epochs}"
@@ -516,6 +502,43 @@ class Model:
             )
         self.total_epochs += epochs
     # endregion Train
+
+    # region Test
+    def test(
+        self,
+        data_loader: image_loader.DatasetIterator,
+        num_classes: int,
+        tqdm_description: str = ""
+    ) -> tuple[float, NDArray]:
+        """
+        Perform test on the model with the given data loader.
+
+        Args:
+            data_loader: Loader with data to test on
+            num_classes: The number of classes in the dataset
+            tqdm_description: The description to display on the progress bar
+
+        Returns:
+            The mean loss and confusion matrix of the test results.
+        """
+        self.eval = True
+        confusion_matrix = metrics.get_new_confusion_matrix(
+            num_classes
+        )
+        loss = sum(
+            self.get_loss_with_confusion_matrix(
+                data,
+                confusion_matrix,
+                labels
+            )
+            for data, labels in tqdm(
+                data_loader,
+                desc=tqdm_description
+            )
+        ) / len(data_loader)
+        self.eval = False
+        return loss, confusion_matrix
+    # endregion Test
 
     # region Metrics
     @staticmethod
