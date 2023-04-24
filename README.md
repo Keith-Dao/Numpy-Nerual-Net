@@ -164,3 +164,23 @@ Valid metrics include:
 - Metrics to track during testing
 - Only accepts the valid metrics listed above
 - Optional, defaults to no metrics if none are provided and skips testing
+
+## 3. Usage
+
+After following the steps listed in [Setup](#1-setup) and [Configuration](#2-configuration), run the driver script with the following:
+
+```
+python main.py [-p] [config_file]
+```
+
+### 3.1. Arguments:
+
+**config_file**:
+
+- The path the config file
+- If omitted, the script will default to searching for `config.yaml` in the current working directory
+
+**-p** or **--prediction-mode**:
+
+- When present, the driver script will skip all training and testing to the prediction mode to perform prediction on individual images
+- If omitted, training and testing will be commenced
