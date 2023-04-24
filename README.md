@@ -184,3 +184,8 @@ python main.py [-p] [config_file]
 
 - When present, the driver script will skip all training and testing to the prediction mode to perform prediction on individual images
 - If omitted, training and testing will be commenced
+
+### 3.2. Prediction mode
+
+- Only supported by models that have stored the classes, which included trained models or loaded pre-trained models
+- Only files formats listed in the configuration file will be processed
