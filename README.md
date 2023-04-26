@@ -222,3 +222,5 @@ The following are the training and validation histories for accuracy and loss re
 From the test metric, it is evident that the model generalises fairly well for all the classes. The history graphs do not display any signs of overfitting or underfitting. From experiments with larger learning rates, the model begins to overfit on the training data, whereas a smaller learning rate would take more epochs to converge. A momentum optimizer would help in this case but is out of scope for this project.
 
 Additionally, the usage of NumPy for the implementation greatly limits the model's training speed as NumPy does not support GPU computation.
+
+Further architecture and pipeline changes could be implemented to improve the model's performance, which will be discussed in the complete technical overview [here](https://github.com/Keith-Dao/Neural-Net-From-Scratch/blob/main/README.md#4-remarks).
