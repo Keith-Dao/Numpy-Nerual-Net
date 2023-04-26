@@ -647,9 +647,13 @@ class Model:
         if metric not in metrics_:
             return
 
+        history = metrics_[metric]
+        if not history:
+            return
+
         axis.plot(
-            range(1, self.total_epochs + 1),
-            metrics_[metric],
+            range(1, len(history) + 1),
+            history,
             ".-",
             label=dataset.capitalize()
         )

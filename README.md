@@ -164,3 +164,61 @@ Valid metrics include:
 - Metrics to track during testing
 - Only accepts the valid metrics listed above
 - Optional, defaults to no metrics if none are provided and skips testing
+
+## 3. Usage
+
+After following the steps listed in [Setup](#1-setup) and [Configuration](#2-configuration), run the driver script with the following:
+
+```
+python main.py [-p] [config_file]
+```
+
+### 3.1. Arguments:
+
+**config_file**:
+
+- The path the config file
+- If omitted, the script will default to searching for `config.yaml` in the current working directory
+
+**-p** or **--prediction-mode**:
+
+- When present, the driver script will skip all training and testing to the prediction mode to perform prediction on individual images
+- If omitted, training and testing will be commenced
+
+### 3.2. Prediction mode
+
+- Only supported by models that have stored the classes, which included trained models or loaded pre-trained models
+- Only files formats listed in the configuration file will be processed
+
+## 4. Remarks
+
+### 4.1. Results
+
+Training with a learning rate of `5.0e-3` over 30 epochs with a 70% train validation split and batch size of 256, resulted in the following test metrics.
+
+| Loss   | Accuracy |
+| ------ | -------- |
+| 0.3799 | 0.8893   |
+
+| Class | Precision | Recall | F1 score |
+| ----- | --------- | ------ | -------- |
+| 0     | 0.9244    | 0.9612 | 0.9425   |
+| 1     | 0.9274    | 0.9797 | 0.9529   |
+| 2     | 0.8439    | 0.8905 | 0.8666   |
+| 3     | 0.8459    | 0.8970 | 0.8707   |
+| 4     | 0.8925    | 0.8880 | 0.8903   |
+| 5     | 0.8770    | 0.7836 | 0.8277   |
+| 6     | 0.8980    | 0.9280 | 0.9127   |
+| 7     | 0.9114    | 0.8901 | 0.9006   |
+| 8     | 0.9012    | 0.7957 | 0.8451   |
+| 9     | 0.8692    | 0.8563 | 0.8627   |
+
+The following are the training and validation histories for accuracy and loss respectively.
+
+| Accuracy history                              | Loss history                          |
+| --------------------------------------------- | ------------------------------------- |
+| ![Accuracy history](./Resources/accuracy.png) | ![Loss history](./Resources/loss.png) |
+
+From the test metric, it is evident that the model generalises fairly well for all the classes. The history graphs do not display any signs of overfitting or underfitting. From experiments with larger learning rates, the model begins to overfit on the training data, whereas a smaller learning rate would take more epochs to converge. A momentum optimizer would help in this case but is out of scope for this project.
+
+Additionally, the usage of NumPy for the implementation greatly limits the model's training speed as NumPy does not support GPU computation.
