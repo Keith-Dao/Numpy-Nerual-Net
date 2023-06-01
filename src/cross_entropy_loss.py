@@ -108,12 +108,12 @@ class CrossEntropyLoss:
         """
         if len(targets) < 1:
             raise ValueError(
-                f"Length of targets must be > 1, got {len(targets)}."
+                f"Length of targets must be >= 1, got {len(targets)}."
             )
 
         if len(logits) < 1:
             raise ValueError(
-                f"Length of logits must be > 1, got {len(logits)}."
+                f"Length of logits must be >= 1, got {len(logits)}."
             )
 
         num_classes = logits.shape[-1]
