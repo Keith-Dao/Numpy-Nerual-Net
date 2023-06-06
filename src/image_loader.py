@@ -15,8 +15,9 @@ class DatasetIterator:
     Dataset iterator.
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
+        root: pathlib.Path,
         data: list[pathlib.Path],
         preprocessing: list[Callable[..., NDArray]],
         class_to_num: dict[str, int],
@@ -27,6 +28,7 @@ class DatasetIterator:
         Dataset iterator init.
 
         Args:
+            root: The root path of the data
             data: The data to iterate through
             preprocessing: The preprocessing steps for the data
             class_to_num: Dictionary to convert the class name to a number
@@ -42,6 +44,7 @@ class DatasetIterator:
                 f"batch_size must be greater than 1, got {batch_size}."
             )
 
+        self._root = root
         self._data = data.copy()
         if kwargs.get("shuffle", True):
             self._data = utils.shuffle(self._data, inplace=True)
@@ -74,7 +77,8 @@ class DatasetIterator:
                     "The preprocessing steps must result in a NumPy array."
                 )
 
-            label = self.class_to_num[filepath.parent.name]
+            label = self.class_to_num[filepath.relative_to(
+                self._root).parents[-2].name]
             return data, label
 
         steps = min(len(self._data) - self._i, self._batch_size)
@@ -132,16 +136,16 @@ class ImageLoader:
                 f" {train_test_split}."
             )
 
-        path: pathlib.Path = pathlib.Path(folder_path)
+        self._root: pathlib.Path = pathlib.Path(folder_path)
         files: list[pathlib.Path] = [
             file_path
-            for file_path in path.glob("**/*.*")
+            for file_path in self._root.glob("**/*.*")
             if file_path.suffix in file_formats
         ]
         if not files:
             raise ValueError(
-                f"No matching files were found at {path} with the extensions"
-                f" {file_formats}")
+                f"No matching files were found at {self._root} with the"
+                f" extensions {file_formats}")
 
         if kwargs.get("shuffle", True):
             utils.shuffle(files, inplace=True)
@@ -153,7 +157,7 @@ class ImageLoader:
 
         self.classes: list[str] = [
             child.name
-            for child in sorted(path.iterdir())
+            for child in sorted(self._root.iterdir())
             if child.is_dir()
         ]
         self.classes_to_int: dict[str, int] = {
@@ -188,6 +192,7 @@ class ImageLoader:
                 f"Selected dataset does not exist, got f{dataset}.")
 
         return DatasetIterator(
+            self._root,
             getattr(self, f"_{dataset}"),
             preprocessing=self._preprocessing,
             class_to_num=self.classes_to_int,
