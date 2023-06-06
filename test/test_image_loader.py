@@ -47,10 +47,15 @@ class TestFixtures:
         tmp_path_factory.mktemp("1", numbered=False)
         tmp_path_factory.mktemp("2", numbered=False)
 
+        (tmp_path_factory.getbasetemp() / "0" / "a").mkdir()
+        (tmp_path_factory.getbasetemp() / "0" / "b").mkdir()
+        (tmp_path_factory.getbasetemp() / "1" / "a").mkdir()
+        (tmp_path_factory.getbasetemp() / "2" / "a").mkdir()
+
         for i, (x, label) in enumerate(zip(*data)):
             image = Image.fromarray(x)
-            path = tmp_path_factory.getbasetemp() / str(label) \
-                / f"{i}.png"
+            path = tmp_path_factory.getbasetemp() / str(label) /\
+                "a" / f"{i}.png"
             image.save(path)
 
         yield tmp_path_factory.getbasetemp()
@@ -101,6 +106,7 @@ class TestDatasetIterator(TestFixtures):
     @pytest.fixture
     def iterator(
         self,
+        dummy_folder,
         dummy_files,
         preprocessing,
         class_to_num,
@@ -111,6 +117,7 @@ class TestDatasetIterator(TestFixtures):
         """
         batch_size, drop_last = request.param
         return DatasetIterator(
+            dummy_folder,
             dummy_files,
             preprocessing,
             class_to_num,
@@ -125,6 +132,7 @@ class TestDatasetIterator(TestFixtures):
     @pytest.mark.parametrize("drop_last", [True, False])
     def test_init(
         self,
+        dummy_folder,
         dummy_files,
         preprocessing,
         class_to_num,
@@ -135,6 +143,7 @@ class TestDatasetIterator(TestFixtures):
         Test a valid DatasetIterator init.
         """
         iterator = DatasetIterator(
+            dummy_folder,
             dummy_files,
             preprocessing,
             class_to_num,
@@ -154,6 +163,7 @@ class TestDatasetIterator(TestFixtures):
     ])
     def test_init_batch_size_with_wrong_type(
         self,
+        dummy_folder,
         dummy_files,
         preprocessing,
         class_to_num,
@@ -164,6 +174,7 @@ class TestDatasetIterator(TestFixtures):
         """
         with pytest.raises(TypeError):
             DatasetIterator(
+                dummy_folder,
                 dummy_files,
                 preprocessing,
                 class_to_num,
@@ -175,6 +186,7 @@ class TestDatasetIterator(TestFixtures):
     ])
     def test_init_batch_size_with_invalid_value(
         self,
+        dummy_folder,
         dummy_files,
         preprocessing,
         class_to_num,
@@ -185,6 +197,7 @@ class TestDatasetIterator(TestFixtures):
         """
         with pytest.raises(ValueError):
             DatasetIterator(
+                dummy_folder,
                 dummy_files,
                 preprocessing,
                 class_to_num,
@@ -194,6 +207,7 @@ class TestDatasetIterator(TestFixtures):
     @pytest.mark.parametrize("shuffle", [True, False])
     def test_init_shuffle(
         self,
+        dummy_folder,
         dummy_files,
         preprocessing,
         class_to_num,
@@ -203,6 +217,7 @@ class TestDatasetIterator(TestFixtures):
         Tests the shuffle for the dataset iterator.
         """
         iterator = DatasetIterator(
+            dummy_folder,
             dummy_files,
             preprocessing,
             class_to_num,
@@ -213,6 +228,7 @@ class TestDatasetIterator(TestFixtures):
 
     def test_init_with_invalid_preprocessing(
         self,
+        dummy_folder,
         dummy_files,
         class_to_num
     ):
@@ -223,6 +239,7 @@ class TestDatasetIterator(TestFixtures):
             return 0
 
         iterator = DatasetIterator(
+            dummy_folder,
             dummy_files,
             [invalid_preprocessing],
             class_to_num,
