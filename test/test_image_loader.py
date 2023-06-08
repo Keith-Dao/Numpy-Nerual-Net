@@ -81,9 +81,7 @@ class TestFixtures:
         """
         Simple preprocessing steps.
         """
-        return [
-            lambda path: np.array(Image.open(path))
-        ]
+        return []
 
     @pytest.fixture
     def class_to_num(self) -> dict[str, int]:

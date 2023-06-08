@@ -69,7 +69,7 @@ class DatasetIterator:
             filepath = self._data[self._i]
             self._i += 1
 
-            data = filepath
+            data = utils.image_to_array(filepath)
             for step in self._preprocessing:
                 data = step(data)
             if not isinstance(data, np.ndarray):
@@ -102,8 +102,7 @@ class ImageLoader:
     Image loader.
     """
 
-    STANDARD_PREPROCESSING: list[Callable[..., NDArray]] = [
-        utils.image_to_array,
+    STANDARD_PREPROCESSING: list[Callable[[NDArray], NDArray]] = [
         utils.normalise_image,
         utils.flatten
     ]
@@ -111,7 +110,7 @@ class ImageLoader:
     def __init__(
         self,
         folder_path: str,
-        preprocessing: list[Callable[..., NDArray]],
+        preprocessing: list[Callable[[NDArray], NDArray]],
         file_formats: list[str],
         train_test_split: float = 1,
         **kwargs
