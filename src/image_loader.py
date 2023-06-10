@@ -41,7 +41,8 @@ class DatasetIterator:
         utils.check_type(batch_size, int, "batch_size")
         if batch_size < 1:
             raise ValueError(
-                f"batch_size must be greater than 1, got {batch_size}."
+                "batch_size must be greater than or equal 1, got "
+                f"{batch_size}."
             )
 
         self._root = root
