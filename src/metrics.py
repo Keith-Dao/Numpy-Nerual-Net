@@ -19,6 +19,10 @@ def get_new_confusion_matrix(num_classes: int) -> NDArray:
     Returns:
         The confusion matrix.
     """
+    if num_classes < 1:
+        raise ValueError(
+            "The number of classes must be greater than 0. Got: "
+            f"{num_classes}")
     return np.zeros((num_classes, num_classes))
 
 

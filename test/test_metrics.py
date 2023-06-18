@@ -30,6 +30,14 @@ class TestConfusionMatrix:
         """
         assert np.array_equal(get_new_confusion_matrix(size), expected)
 
+    @pytest.mark.parametrize("size", [-1, 0])
+    def test_create_confusion_matrix_with_invalid_value(self, size):
+        """
+        Tests the create confusion matrix method.
+        """
+        with pytest.raises(ValueError):
+            get_new_confusion_matrix(size)
+
     @pytest.mark.parametrize(
         "confusion_matrix, predictions, actual, expected",
         [
