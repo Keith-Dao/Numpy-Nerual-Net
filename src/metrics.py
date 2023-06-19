@@ -77,12 +77,12 @@ def precision(confusion_matrix: NDArray) -> NDArray:
         The precision.
     """
     correct_predictions = confusion_matrix.diagonal().astype(float)
-    actual = confusion_matrix.sum(axis=1, dtype=float)
+    predicted = confusion_matrix.sum(axis=1, dtype=float)
     return np.divide(
         correct_predictions,
-        actual,
+        predicted,
         out=np.zeros_like(correct_predictions),
-        where=actual != 0
+        where=predicted != 0
     )
 
 
@@ -97,12 +97,12 @@ def recall(confusion_matrix: NDArray) -> NDArray:
         The recall.
     """
     correct_predictions = confusion_matrix.diagonal().astype(float)
-    predicted = confusion_matrix.sum(axis=0, dtype=float)
+    actual = confusion_matrix.sum(axis=0, dtype=float)
     return np.divide(
         correct_predictions,
-        predicted,
+        actual,
         out=np.zeros_like(correct_predictions),
-        where=predicted != 0
+        where=actual != 0
     )
 
 
