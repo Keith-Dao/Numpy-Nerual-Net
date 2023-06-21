@@ -6,7 +6,7 @@ import json
 import pathlib
 import pickle
 from types import ModuleType
-from typing import Any
+from typing import Any, Iterable
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
@@ -157,13 +157,7 @@ class Model:
         else:
             self._train_metrics = Model.metrics_list_to_dict(train_metrics)
 
-        if any(
-            metric != "loss" and not hasattr(metrics, metric)
-            for metric in self.train_metrics
-        ):
-            raise ValueError(
-                "An invalid metric was provided to train_metrics."
-            )
+        Model.validate_metrics(self._train_metrics)
         if any(
             not isinstance(value, list)
             for value in self.train_metrics.values()
@@ -196,13 +190,7 @@ class Model:
                 validation_metrics
             )
 
-        if any(
-            metric != "loss" and not hasattr(metrics, metric)
-            for metric in self.validation_metrics
-        ):
-            raise ValueError(
-                "An invalid metric was provided to validation_metrics."
-            )
+        Model.validate_metrics(self._validation_metrics)
         if any(
             not isinstance(value, list)
             for value in self.validation_metrics.values()
@@ -541,6 +529,22 @@ class Model:
 
     # region Metrics
     @staticmethod
+    def validate_metrics(metrics_: Iterable[str]):
+        """
+        Validates that all metrics are valid.
+
+        Args:
+            metrics_: The metrics to validate.
+        """
+        if any(
+            metric != "loss" and not hasattr(metrics, metric)
+            for metric in metrics_
+        ):
+            raise ValueError(
+                "An invalid metric type was provided."
+            )
+
+    @staticmethod
     def metrics_list_to_dict(metrics_: list[str]) -> dict[str, list]:
         """
         Convert a list of metrics to a dictionary to store the metric
@@ -553,14 +557,7 @@ class Model:
             A dictionary to store the history of each metric that
             need to be stored.
         """
-        if any(
-            metric != "loss" and not hasattr(metrics, metric)
-            for metric in metrics_
-        ):
-            raise ValueError(
-                "An invalid metric type was provided."
-            )
-
+        Model.validate_metrics(metrics_)
         return {
             metric: []
             for metric in metrics_
