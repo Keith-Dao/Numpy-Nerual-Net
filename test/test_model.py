@@ -370,12 +370,12 @@ class TestModel:
         {"loss": [1, 2, 3, 4], "invalid": []},
         {"invalid": []},
         {"loss": {}},
-        {"loss": 1}
+        {"loss": 1},
+        ["INVALID"]
     ])
     def test_train_metrics_invalid_metric(self, model, train_metrics):
         """
-        Test setting the model's train metrics with a dictionary that
-        has an invalid metric.
+        Test setting the model's train metrics with an invalid metric.
         """
         with pytest.raises(ValueError):
             model.train_metrics = train_metrics
@@ -411,7 +411,8 @@ class TestModel:
         {"loss": [1, 2, 3, 4], "invalid": []},
         {"invalid": []},
         {"loss": {}},
-        {"loss": 1}
+        {"loss": 1},
+        ["INVALID"]
     ])
     def test_validation_metrics_invalid_metric(
         self,
@@ -419,8 +420,7 @@ class TestModel:
         validation_metrics
     ):
         """
-        Test setting the model's validation metrics with a dictionary that
-        has an invalid metric.
+        Test setting the model's validation metrics with an invalid metric.
         """
         with pytest.raises(ValueError):
             model.validation_metrics = validation_metrics
