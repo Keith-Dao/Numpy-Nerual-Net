@@ -404,7 +404,6 @@ class Model:
     # endregion Forward pass
 
     # region Train
-
     def _train_step(
         self,
         data: NDArray,
@@ -554,6 +553,14 @@ class Model:
             A dictionary to store the history of each metric that
             need to be stored.
         """
+        if any(
+            metric != "loss" and not hasattr(metrics, metric)
+            for metric in metrics_
+        ):
+            raise ValueError(
+                "An invalid metric type was provided."
+            )
+
         return {
             metric: []
             for metric in metrics_
