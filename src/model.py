@@ -529,7 +529,7 @@ class Model:
 
     # region Metrics
     @staticmethod
-    def validate_metrics(metrics_: Iterable[str]):
+    def validate_metrics(metrics_: Iterable[str]) -> None:
         """
         Validates that all metrics are valid.
 
