@@ -350,7 +350,7 @@ class Model:
         labels: list[int]
     ) -> float:
         """
-        Perform the forward pass and store the predictions to the
+        Perform the forward pass and store the predictions in the
         confusion matrix.
 
         Args:
@@ -363,7 +363,7 @@ class Model:
         Returns:
             The loss of the forward pass.
         """
-        logits = self(input_)
+        logits = self.forward(input_)
         metrics.add_to_confusion_matrix(
             confusion_matrix,
             utils.logits_to_prediction(logits),
@@ -384,7 +384,7 @@ class Model:
         if self.classes is None:
             raise ValueError("Model is missing the classes.")
 
-        logits = self(input_)
+        logits = self.forward(input_)
         return [
             self.classes[label]
             for label in utils.logits_to_prediction(logits)
@@ -531,7 +531,7 @@ class Model:
     @staticmethod
     def validate_metrics(metrics_: Iterable[str]) -> None:
         """
-        Validates that all metrics are valid.
+        Validates the given metrics.
 
         Args:
             metrics_: The metrics to validate.
