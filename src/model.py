@@ -343,6 +343,27 @@ class Model:
             out = layer(out)
         return out
 
+    def predict(self, input_: NDArray) -> list[str]:
+        """
+        Using the provided input, predict the classes.
+
+        Args:
+            input_: The input values to the model
+
+        Returns:
+            The predicted classes.
+        """
+        if self.classes is None:
+            raise ValueError("Model is missing the classes.")
+
+        logits = self.forward(input_)
+        return [
+            self.classes[label]
+            for label in utils.logits_to_prediction(logits)
+        ]
+    # endregion Forward pass
+
+    # region Train
     def get_loss_with_confusion_matrix(
         self,
         input_: NDArray,
@@ -371,27 +392,6 @@ class Model:
         )
         return self.loss(logits, labels)
 
-    def predict(self, input_: NDArray) -> list[str]:
-        """
-        Using the provided input, predict the classes.
-
-        Args:
-            input_: The input values to the model
-
-        Returns:
-            The predicted classes.
-        """
-        if self.classes is None:
-            raise ValueError("Model is missing the classes.")
-
-        logits = self.forward(input_)
-        return [
-            self.classes[label]
-            for label in utils.logits_to_prediction(logits)
-        ]
-    # endregion Forward pass
-
-    # region Train
     def _train_step(
         self,
         data: NDArray,

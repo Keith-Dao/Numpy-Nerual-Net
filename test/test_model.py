@@ -609,6 +609,20 @@ class TestModel:
                 [1.,  1.]
             ])
         )
+
+    def test_predict(self, model):
+        """
+        Tests predict.
+        """
+        assert model.predict(np.array([0, 0, 0, 0])) == ["0"]
+
+    def test_predict_no_classes(self, model):
+        """
+        Tests predict when the model is missing the classes.
+        """
+        model.classes = None
+        with pytest.raises(ValueError):
+            model.predict(np.array([0, 0, 0, 0]))
     # endregion Forward pass tests
 
     # region Backward pass / train tests
@@ -803,22 +817,6 @@ class TestModel:
             atol=FLOAT_TOLERANCE
         )
     # endregion Backward pass / train tests
-
-    # region Predict tests
-    def test_predict(self, model):
-        """
-        Tests predict.
-        """
-        assert model.predict(np.array([0, 0, 0, 0])) == ["0"]
-
-    def test_predict_no_classes(self, model):
-        """
-        Tests predict when the model is missing the classes.
-        """
-        model.classes = None
-        with pytest.raises(ValueError):
-            model.predict(np.array([0, 0, 0, 0]))
-    # endregion Predict tests
 
     # region Built-ins tests
     @pytest.mark.parametrize("layers_, loss_, result", [
