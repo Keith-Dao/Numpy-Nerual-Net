@@ -414,7 +414,7 @@ def start_prediction(
             utils.print_error("Invalid file format.")
             continue
 
-        data = filepath
+        data = utils.image_to_array(filepath)
         for preprocess in preprocessing:
             data = preprocess(data)
 
