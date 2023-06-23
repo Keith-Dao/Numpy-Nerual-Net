@@ -595,7 +595,7 @@ class TestModel:
         """
         X, *_ = data
         assert np.array_equal(
-            model(X),
+            model.forward(X),
             np.array([
                 [25., 25.],
                 [34., 34.],
@@ -819,6 +819,27 @@ class TestModel:
     # endregion Backward pass / train tests
 
     # region Built-ins tests
+    def test_call(self, model, data):
+        """
+        Tests call.
+        """
+        X, *_ = data
+        assert np.array_equal(
+            model(X),
+            np.array([
+                [25., 25.],
+                [34., 34.],
+                [79., 79.],
+                [1.,  1.],
+                [49., 49.],
+                [55., 55.],
+                [0.,  0.],
+                [0.,  0.],
+                [49., 49.],
+                [1.,  1.]
+            ])
+        )
+
     @pytest.mark.parametrize("layers_, loss_, result", [
         # Same
         (
