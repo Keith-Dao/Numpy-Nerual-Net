@@ -353,7 +353,7 @@ class Model:
         Returns:
             The predicted classes.
         """
-        if self.classes is None:
+        if not self.classes:
             raise ValueError("Model is missing the classes.")
 
         logits = self.forward(input_)
@@ -475,7 +475,6 @@ class Model:
 
             validation_loss, confusion_matrix = self.test(
                 validation_data,
-                num_classes,
                 f"Validation epoch {epoch}/{epochs}"
             )
             Model.store_metrics(
@@ -494,7 +493,6 @@ class Model:
     def test(
         self,
         data_loader: image_loader.DatasetIterator,
-        num_classes: int,
         tqdm_description: str = ""
     ) -> tuple[float, NDArray]:
         """
@@ -508,9 +506,12 @@ class Model:
         Returns:
             The mean loss and confusion matrix of the test results.
         """
+        if not self.classes:
+            raise ValueError("Model is missing the classes.")
+
         self.eval = True
         confusion_matrix = metrics.get_new_confusion_matrix(
-            num_classes
+            len(self.classes)
         )
         loss = sum(
             self.get_loss_with_confusion_matrix(

@@ -818,6 +818,18 @@ class TestModel:
         )
     # endregion Backward pass / train tests
 
+    # region Test tests
+    @pytest.mark.parametrize("mock_loader", [1], indirect=["mock_loader"])
+    @pytest.mark.parametrize("classes", [None, []])
+    def test_test_no_classes(self, model, mock_loader, classes):
+        """
+        Tests the test function when the model does not have the classes.
+        """
+        model.classes = classes
+        with pytest.raises(ValueError):
+            model.test(mock_loader)
+    # endregion Test tests
+
     # region Built-ins tests
     def test_call(self, model, data):
         """
