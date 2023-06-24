@@ -827,7 +827,7 @@ class TestModel:
         """
         model.classes = classes
         with pytest.raises(ValueError):
-            model.test(mock_loader)
+            model.test(mock_loader("train", 1))
     # endregion Test tests
 
     # region Built-ins tests
