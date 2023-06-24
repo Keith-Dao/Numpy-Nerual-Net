@@ -509,6 +509,7 @@ class Model:
         if not self.classes:
             raise ValueError("Model is missing the classes.")
 
+        eval_ = self.eval
         self.eval = True
         confusion_matrix = metrics.get_new_confusion_matrix(
             len(self.classes)
@@ -524,7 +525,7 @@ class Model:
                 desc=tqdm_description
             )
         ) / len(data_loader)
-        self.eval = False
+        self.eval = eval_
         return loss, confusion_matrix
     # endregion Test
 
