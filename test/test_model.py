@@ -595,7 +595,7 @@ class TestModel:
         """
         X, *_ = data
         assert np.array_equal(
-            model(X),
+            model.forward(X),
             np.array([
                 [25., 25.],
                 [34., 34.],
@@ -609,6 +609,20 @@ class TestModel:
                 [1.,  1.]
             ])
         )
+
+    def test_predict(self, model):
+        """
+        Tests predict.
+        """
+        assert model.predict(np.array([0, 0, 0, 0])) == ["0"]
+
+    def test_predict_no_classes(self, model):
+        """
+        Tests predict when the model is missing the classes.
+        """
+        model.classes = None
+        with pytest.raises(ValueError):
+            model.predict(np.array([0, 0, 0, 0]))
     # endregion Forward pass tests
 
     # region Backward pass / train tests
@@ -632,25 +646,35 @@ class TestModel:
         assert model.validation_metrics["loss"] == []
         assert np.allclose(
             model.layers[0].weight,
-            np.array([[0.99999876, 1.0000021,  1.00000052, 0.99999819],
-                      [0.99999876, 1.0000021,  1.00000052, 0.99999819],
-                      [0.99999876, 1.0000021,  1.00000052, 0.99999819]]),
+            np.array([
+                [
+                    0.999998755067, 1.000002096106,
+                    1.000000522309, 0.999998187911
+                ],
+                [
+                    0.999998755067, 1.000002096106,
+                    1.000000522309, 0.999998187911
+                ],
+                [
+                    0.999998755067, 1.000002096106,
+                    1.000000522309, 0.999998187911
+                ]]),
             atol=FLOAT_TOLERANCE
         )
         assert np.allclose(
             model.layers[1].weight,
-            np.array([[0.99806522, 0.99806522, 0.99806522],
-                      [1.00193478, 1.00193478, 1.00193478]]),
+            np.array([[0.998065222731, 0.998065222731, 0.998065222731],
+                      [1.001934777269, 1.001934777269, 1.001934777269]]),
             atol=FLOAT_TOLERANCE
         )
         assert np.allclose(
             model.layers[0].bias,
-            np.array([0.99999993, 0.99999993, 0.99999993]),
+            np.array([0.9999999267982, 0.9999999267982, 0.9999999267982]),
             atol=FLOAT_TOLERANCE
         )
         assert np.allclose(
             model.layers[1].bias,
-            np.array([0.99991213, 1.00008787]),
+            np.array([0.999912134981, 1.000087865019]),
             atol=FLOAT_TOLERANCE
         )
 
@@ -680,25 +704,35 @@ class TestModel:
         )
         assert np.allclose(
             model.layers[0].weight,
-            np.array([[0.99999928, 1.00000069, 1.00000002, 0.99999771],
-                      [0.99999928, 1.00000069, 1.00000002, 0.99999771],
-                      [0.99999928, 1.00000069, 1.00000002, 0.99999771]]),
+            np.array([
+                [
+                    0.999999277295, 1.000000688537,
+                    1.00000001873, 0.999997713475
+                ],
+                [
+                    0.999999277295, 1.000000688537,
+                    1.00000001873, 0.999997713475],
+                [
+                    0.999999277295, 1.000000688537,
+                    1.00000001873, 0.999997713475
+                ]]),
             atol=FLOAT_TOLERANCE
         )
         assert np.allclose(
             model.layers[1].weight,
-            np.array([[0.99881988, 0.99881988, 0.99881988],
-                      [1.00118012, 1.00118012, 1.00118012]]),
+            np.array([
+                [0.998819881654, 0.998819881654, 0.998819881654],
+                [1.001180118346, 1.001180118346, 1.001180118346]]),
             atol=FLOAT_TOLERANCE
         )
         assert np.allclose(
             model.layers[0].bias,
-            np.array([1.00000001, 1.00000001, 1.00000001]),
+            np.array([1.000000008979, 1.000000008979, 1.000000008979]),
             atol=FLOAT_TOLERANCE
         )
         assert np.allclose(
             model.layers[1].bias,
-            np.array([0.99990929, 1.00009071]),
+            np.array([0.999909294313, 1.000090705687]),
             atol=FLOAT_TOLERANCE
         )
 
@@ -730,25 +764,35 @@ class TestModel:
         )
         assert np.allclose(
             model.layers[0].weight,
-            np.array([[0.99999946, 1.00000456, 1.00000442, 0.99998909],
-                      [0.99999946, 1.00000456, 1.00000442, 0.99998909],
-                      [0.99999946, 1.00000456, 1.00000442, 0.99998909]]),
+            np.array([
+                [
+                    0.999999463368, 1.000004564799,
+                    1.000004417718, 0.999989087074
+                ],
+                [
+                    0.999999463368, 1.000004564799,
+                    1.000004417718, 0.999989087074
+                ],
+                [
+                    0.999999463368, 1.000004564799,
+                    1.000004417718, 0.999989087074
+                ]]),
             atol=FLOAT_TOLERANCE
         )
         assert np.allclose(
             model.layers[1].weight,
-            np.array([[0.99711622, 0.99711622, 0.99711622],
-                      [1.00288378, 1.00288378, 1.00288378]]),
+            np.array([[0.997116223774, 0.997116223774, 0.997116223774],
+                      [1.002883776226, 1.002883776226, 1.002883776226]]),
             atol=FLOAT_TOLERANCE
         )
         assert np.allclose(
             model.layers[0].bias,
-            np.array([1.00000042, 1.00000042, 1.00000042]),
+            np.array([1.000000421266, 1.000000421266, 1.000000421266]),
             atol=FLOAT_TOLERANCE
         )
         assert np.allclose(
             model.layers[1].bias,
-            np.array([0.99976392, 1.00023608]),
+            np.array([0.999763917669, 1.000236082331]),
             atol=FLOAT_TOLERANCE
         )
 
@@ -781,46 +825,73 @@ class TestModel:
         )
         assert np.allclose(
             model.layers[0].weight,
-            np.array([[1.00000007, 0.99999989, 1.00000085, 0.99999841],
-                      [1.00000007, 0.99999989, 1.00000085, 0.99999841],
-                      [1.00000007, 0.99999989, 1.00000085, 0.99999841]]),
+            np.array([
+                [
+                    1.000000065579, 0.999999892849,
+                    1.000000853661, 0.999998408936
+                ],
+                [
+                    1.000000065579, 0.999999892849,
+                    1.000000853661, 0.999998408936
+                ],
+                [
+                    1.000000065579, 0.999999892849,
+                    1.000000853661, 0.999998408936
+                ]]),
             atol=FLOAT_TOLERANCE
         )
         assert np.allclose(
             model.layers[1].weight,
-            np.array([[0.998776, 0.998776, 0.998776],
-                      [1.001224, 1.001224, 1.001224]]),
+            np.array([[0.998776001136, 0.998776001136, 0.998776001136],
+                      [1.001223998864, 1.001223998864, 1.001223998864]]),
             atol=FLOAT_TOLERANCE
         )
         assert np.allclose(
             model.layers[0].bias,
-            np.array([1.00000012, 1.00000012, 1.00000012]),
+            np.array([1.000000123572, 1.000000123572, 1.000000123572]),
             atol=FLOAT_TOLERANCE
         )
         assert np.allclose(
             model.layers[1].bias,
-            np.array([0.99990739, 1.00009261]),
+            np.array([0.999907388883, 1.000092611117]),
             atol=FLOAT_TOLERANCE
         )
     # endregion Backward pass / train tests
 
-    # region Predict tests
-    def test_predict(self, model):
+    # region Test tests
+    @pytest.mark.parametrize("mock_loader", [1], indirect=["mock_loader"])
+    @pytest.mark.parametrize("classes", [None, []])
+    def test_test_no_classes(self, model, mock_loader, classes):
         """
-        Tests predict.
+        Tests the test function when the model does not have the classes.
         """
-        assert model.predict(np.array([0, 0, 0, 0])) == ["0"]
-
-    def test_predict_no_classes(self, model):
-        """
-        Tests predict when the model is missing the classes.
-        """
-        model.classes = None
+        model.classes = classes
         with pytest.raises(ValueError):
-            model.predict(np.array([0, 0, 0, 0]))
-    # endregion Predict tests
+            model.test(mock_loader("train", 1))
+    # endregion Test tests
 
     # region Built-ins tests
+    def test_call(self, model, data):
+        """
+        Tests call.
+        """
+        X, *_ = data
+        assert np.array_equal(
+            model(X),
+            np.array([
+                [25., 25.],
+                [34., 34.],
+                [79., 79.],
+                [1.,  1.],
+                [49., 49.],
+                [55., 55.],
+                [0.,  0.],
+                [0.,  0.],
+                [49., 49.],
+                [1.,  1.]
+            ])
+        )
+
     @pytest.mark.parametrize("layers_, loss_, result", [
         # Same
         (

@@ -352,7 +352,6 @@ def test_model(model_: model.Model, config: dict[str, Any]) -> None:
 
     test_loss, confusion_matrix = model_.test(
         test_image_loader("test", batch_size),
-        len(test_image_loader.classes),
         "Testing"
     )
     model.Model.store_metrics(metric_history, confusion_matrix, test_loss)
@@ -415,7 +414,7 @@ def start_prediction(
             utils.print_error("Invalid file format.")
             continue
 
-        data = filepath
+        data = utils.image_to_array(filepath)
         for preprocess in preprocessing:
             data = preprocess(data)
 

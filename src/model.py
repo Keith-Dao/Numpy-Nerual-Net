@@ -343,6 +343,27 @@ class Model:
             out = layer(out)
         return out
 
+    def predict(self, input_: NDArray) -> list[str]:
+        """
+        Using the provided input, predict the classes.
+
+        Args:
+            input_: The input values to the model
+
+        Returns:
+            The predicted classes.
+        """
+        if not self.classes:
+            raise ValueError("Model is missing the classes.")
+
+        logits = self.forward(input_)
+        return [
+            self.classes[label]
+            for label in utils.logits_to_prediction(logits)
+        ]
+    # endregion Forward pass
+
+    # region Train
     def get_loss_with_confusion_matrix(
         self,
         input_: NDArray,
@@ -350,7 +371,7 @@ class Model:
         labels: list[int]
     ) -> float:
         """
-        Perform the forward pass and store the predictions to the
+        Perform the forward pass and store the predictions in the
         confusion matrix.
 
         Args:
@@ -363,7 +384,7 @@ class Model:
         Returns:
             The loss of the forward pass.
         """
-        logits = self(input_)
+        logits = self.forward(input_)
         metrics.add_to_confusion_matrix(
             confusion_matrix,
             utils.logits_to_prediction(logits),
@@ -371,27 +392,6 @@ class Model:
         )
         return self.loss(logits, labels)
 
-    def predict(self, input_: NDArray) -> list[str]:
-        """
-        Using the provided input, predict the classes.
-
-        Args:
-            input_: The input values to the model
-
-        Returns:
-            The predicted classes.
-        """
-        if self.classes is None:
-            raise ValueError("Model is missing the classes.")
-
-        logits = self(input_)
-        return [
-            self.classes[label]
-            for label in utils.logits_to_prediction(logits)
-        ]
-    # endregion Forward pass
-
-    # region Train
     def _train_step(
         self,
         data: NDArray,
@@ -475,7 +475,6 @@ class Model:
 
             validation_loss, confusion_matrix = self.test(
                 validation_data,
-                num_classes,
                 f"Validation epoch {epoch}/{epochs}"
             )
             Model.store_metrics(
@@ -494,7 +493,6 @@ class Model:
     def test(
         self,
         data_loader: image_loader.DatasetIterator,
-        num_classes: int,
         tqdm_description: str = ""
     ) -> tuple[float, NDArray]:
         """
@@ -508,9 +506,13 @@ class Model:
         Returns:
             The mean loss and confusion matrix of the test results.
         """
+        if not self.classes:
+            raise ValueError("Model is missing the classes.")
+
+        eval_ = self.eval
         self.eval = True
         confusion_matrix = metrics.get_new_confusion_matrix(
-            num_classes
+            len(self.classes)
         )
         loss = sum(
             self.get_loss_with_confusion_matrix(
@@ -523,7 +525,7 @@ class Model:
                 desc=tqdm_description
             )
         ) / len(data_loader)
-        self.eval = False
+        self.eval = eval_
         return loss, confusion_matrix
     # endregion Test
 
@@ -531,7 +533,7 @@ class Model:
     @staticmethod
     def validate_metrics(metrics_: Iterable[str]) -> None:
         """
-        Validates that all metrics are valid.
+        Validates the given metrics.
 
         Args:
             metrics_: The metrics to validate.
