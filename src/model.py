@@ -311,8 +311,7 @@ class Model:
             save_path: Path to save the model attributes.
         """
         utils.check_type(save_path, (str, pathlib.Path), "save_path")
-        if isinstance(save_path, str):
-            save_path = pathlib.Path(save_path)
+        save_path = pathlib.Path(save_path)
 
         if save_path.suffix not in Model.SAVE_METHODS:
             raise ValueError(
