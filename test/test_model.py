@@ -436,7 +436,8 @@ class TestModel:
         {
             "total_epochs": 10,
             "train_metrics": {"loss": [1, 2, 3]},
-            "validation_metrics": {"loss": [1, 2, 3]}
+            "validation_metrics": {"loss": [1, 2, 3]},
+            "classes": ["0", "1", "2"]
         },
     ])
     def test_from_dict(self, model, attributes):
@@ -446,6 +447,8 @@ class TestModel:
         for key in ["train_metrics", "validation_metrics"]:
             if key not in attributes:
                 attributes[key] = ["loss"]
+        if "classes" not in attributes:
+            attributes["classes"] = ["0", "1"]
 
         for attribute, value in attributes.items():
             setattr(model, attribute, value)
@@ -461,6 +464,7 @@ class TestModel:
         assert model.total_epochs == new_model.total_epochs
         assert model.train_metrics == new_model.train_metrics
         assert model.validation_metrics == new_model.validation_metrics
+        assert model.classes == new_model.classes
 
     def test_from_dict_with_invalid_class_name(self, model):
         """
