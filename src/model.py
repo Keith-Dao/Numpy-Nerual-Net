@@ -695,11 +695,11 @@ class Model:
             classes: The classes that are being displayed
         """
         visualizable_metrics = (
+            metrics.SINGLE_VALUE_METRICS &
             (
                 set(self.train_metrics.keys())
                 | set(self.validation_metrics.keys())
             )
-            & metrics.SINGLE_VALUE_METRICS
         )
 
         graphed_metrics = utils.join_with_different_last(
