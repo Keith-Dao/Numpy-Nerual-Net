@@ -643,8 +643,6 @@ class Model:
             metric: The metric to plot
             axis: The axis to plot the metric on
         """
-        if self.classes is None:
-            raise ValueError("Cannot plot metrics. Missing classes.")
         if metric not in metrics.SINGLE_VALUE_METRICS:
             raise ValueError(f"Plotting {metric} is not supported.")
 
