@@ -311,8 +311,7 @@ class Model:
             save_path: Path to save the model attributes.
         """
         utils.check_type(save_path, (str, pathlib.Path), "save_path")
-        if isinstance(save_path, str):
-            save_path = pathlib.Path(save_path)
+        save_path = pathlib.Path(save_path)
 
         if save_path.suffix not in Model.SAVE_METHODS:
             raise ValueError(
@@ -644,8 +643,6 @@ class Model:
             metric: The metric to plot
             axis: The axis to plot the metric on
         """
-        if self.classes is None:
-            raise ValueError("Cannot plot metrics. Missing classes.")
         if metric not in metrics.SINGLE_VALUE_METRICS:
             raise ValueError(f"Plotting {metric} is not supported.")
 
@@ -698,14 +695,12 @@ class Model:
             classes: The classes that are being displayed
         """
         visualizable_metrics = (
+            metrics.SINGLE_VALUE_METRICS &
             (
                 set(self.train_metrics.keys())
                 | set(self.validation_metrics.keys())
             )
-            & metrics.SINGLE_VALUE_METRICS
         )
-        for metric in visualizable_metrics:
-            self._generate_history_graph(metric)
 
         graphed_metrics = utils.join_with_different_last(
             visualizable_metrics,
@@ -716,9 +711,12 @@ class Model:
             "Would you like to view the history graphs for"
             f" {graphed_metrics}? [y/n]: "
         )
-        if utils.is_yes(show_graph):
-            plt.show()
-        plt.close("all")
+        if not utils.is_yes(show_graph):
+            return
+
+        for metric in visualizable_metrics:
+            self._generate_history_graph(metric)
+        plt.show(block=False)
     # endregion Visualisation
 
     # region Built-ins
