@@ -701,8 +701,6 @@ class Model:
             )
             & metrics.SINGLE_VALUE_METRICS
         )
-        for metric in visualizable_metrics:
-            self._generate_history_graph(metric)
 
         graphed_metrics = utils.join_with_different_last(
             visualizable_metrics,
@@ -713,9 +711,12 @@ class Model:
             "Would you like to view the history graphs for"
             f" {graphed_metrics}? [y/n]: "
         )
-        if utils.is_yes(show_graph):
-            plt.show()
-        plt.close("all")
+        if not utils.is_yes(show_graph):
+            return
+
+        for metric in visualizable_metrics:
+            self._generate_history_graph(metric)
+        plt.show(block=False)
     # endregion Visualisation
 
     # region Built-ins
