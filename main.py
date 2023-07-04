@@ -51,7 +51,6 @@ def get_args() -> argparse.Namespace:
         The command line args.
     """
     parser = argparse.ArgumentParser(
-        prog="Neural Net",
         description="Neural network for classifying images of digits."
     )
     parser.add_argument(
