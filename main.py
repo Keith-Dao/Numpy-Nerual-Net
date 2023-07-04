@@ -91,7 +91,6 @@ def get_config(config_path: str) -> dict[str, Any]:
 
 def get_train_validation_split(
     config: dict[str, Any],
-    dataset: str
 ) -> float:
     """
     Get the train validation split in the config file.
@@ -101,11 +100,8 @@ def get_train_validation_split(
         dataset: The dataset to load
 
     Returns:
-        The train validation split or 0 if the dataset is test.
+        The train validation split.
     """
-    if dataset == "test":
-        return 0
-
     if config.get("train_validation_split") is None:
         utils.print_warning(
             "No value for train_validation_split was provided."
@@ -207,7 +203,11 @@ def get_image_loader(
         )
         return None
 
-    train_validation_split = get_train_validation_split(config, dataset)
+    train_validation_split = (
+        0
+        if dataset == "test"
+        else get_train_validation_split(config)
+    )
     file_formats = get_file_formats(config)
 
     return image_loader.ImageLoader(
