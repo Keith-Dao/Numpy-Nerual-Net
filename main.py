@@ -310,7 +310,7 @@ def prompt_save(model_: model.Model) -> None:
         " or "
     )
     enter_path_prompt = (
-        "Enter a file path with the one of the following extensions"
+        "Enter a file path with one of the following extensions"
         f" ({extensions}) or type {stop_code} to cancel saving: "
     )
     save_path = utils.get_path_input(
