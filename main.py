@@ -143,6 +143,8 @@ def get_batch_size(config: dict[str, Any]) -> int:
     if config.get("batch_size") is None:
         utils.print_warning("Value of batch_size not found, defaulting to 1.")
         return 1
+    if config["batch_size"] <= 0:
+        raise ValueError("batch_size must be greater than 0.")
     return config["batch_size"]
 # endregion Parse config
 
@@ -374,9 +376,8 @@ def train_and_test(model_: model.Model, config: dict[str, Any]) -> None:
     test_model(model_, config)
 # endregion Train and test
 
+
 # region Predict
-
-
 def start_prediction(
     model_: model.Model,
     config: dict[str, Any]
