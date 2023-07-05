@@ -325,7 +325,7 @@ def prompt_save(model_: model.Model) -> None:
 
     save_path.parent.mkdir(parents=True, exist_ok=True)
     model_.save(save_path)
-    print(f"Model successfully saved at {save_path.resolve()}.")
+    print(f"Model successfully saved at \"{save_path.resolve()}\".")
 # endregion Save prompt
 
 
