@@ -449,7 +449,7 @@ def main():
         train_and_test(model_, config)
     start_prediction(model_, config)
     if plt.get_fignums():
-        input("Hit enter to close all opened graphs: ")
+        input("Hit ENTER to close all opened graphs: ")
 
 
 if __name__ == "__main__":
