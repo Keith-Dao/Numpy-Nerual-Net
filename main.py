@@ -419,9 +419,7 @@ def start_prediction(
         for preprocess in preprocessing:
             data = preprocess(data)
 
-        prediction = model_.predict(
-            data  # pyright: ignore [reportGeneralTypeIssues]
-        )[0]
+        prediction = model_.predict(data)[0]
         print(f"Predicted: {prediction}")
 
     model_.eval = False
