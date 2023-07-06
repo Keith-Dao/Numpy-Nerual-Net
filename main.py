@@ -399,30 +399,28 @@ def start_prediction(
     if not utils.is_yes(input("Would you like to predict images? [y/n]: ")):
         return
 
-    model_.eval = True
-    file_formats = get_file_formats(config)
-    preprocessing = image_loader.ImageLoader.STANDARD_PREPROCESSING
-    stop_code = "QUIT"
-    while True:
-        filepath = utils.get_path_input(
-            f"Please enter the path to the image or {stop_code} to exit: ",
-            stop_code
-        )
-        if filepath is None:
-            break
+    with model_.inference_mode():
+        file_formats = get_file_formats(config)
+        preprocessing = image_loader.ImageLoader.STANDARD_PREPROCESSING
+        stop_code = "QUIT"
+        while True:
+            filepath = utils.get_path_input(
+                f"Please enter the path to the image or {stop_code} to exit: ",
+                stop_code
+            )
+            if filepath is None:
+                break
 
-        if filepath.suffix not in file_formats:
-            utils.print_error("Invalid file format.")
-            continue
+            if filepath.suffix not in file_formats:
+                utils.print_error("Invalid file format.")
+                continue
 
-        data = utils.image_to_array(filepath)
-        for preprocess in preprocessing:
-            data = preprocess(data)
+            data = utils.image_to_array(filepath)
+            for preprocess in preprocessing:
+                data = preprocess(data)
 
-        prediction = model_.predict(data)[0]
-        print(f"Predicted: {prediction}")
-
-    model_.eval = False
+            prediction = model_.predict(data)[0]
+            print(f"Predicted: {prediction}")
 # endregion Predict
 
 

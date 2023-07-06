@@ -2,6 +2,7 @@
 This module contains the model class.
 """
 from __future__ import annotations
+from contextlib import contextmanager
 import json
 import pathlib
 import pickle
@@ -23,7 +24,7 @@ from src import (
 )
 
 
-# pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-instance-attributes, too-many-public-methods
 class Model:
     """
     The neural network model.
@@ -83,9 +84,20 @@ class Model:
         for layer in self.layers:
             layer.eval = eval_
         self._eval = eval_
+
+    @contextmanager
+    def inference_mode(self):
+        """
+        Context manager to set the model into inference mode.
+        """
+        prev_eval = self.eval
+        self.eval = True
+        yield
+        self.eval = prev_eval
     # endregion Evaluation mode
 
     # region Layers
+
     @property
     def layers(self) -> list[linear.Linear]:
         """
@@ -508,23 +520,21 @@ class Model:
         if not self.classes:
             raise ValueError("Model is missing the classes.")
 
-        eval_ = self.eval
-        self.eval = True
-        confusion_matrix = metrics.get_new_confusion_matrix(
-            len(self.classes)
-        )
-        loss = sum(
-            self.get_loss_with_confusion_matrix(
-                data,
-                confusion_matrix,
-                labels
+        with self.inference_mode():
+            confusion_matrix = metrics.get_new_confusion_matrix(
+                len(self.classes)
             )
-            for data, labels in tqdm(
-                data_loader,
-                desc=tqdm_description
-            )
-        ) / len(data_loader)
-        self.eval = eval_
+            loss = sum(
+                self.get_loss_with_confusion_matrix(
+                    data,
+                    confusion_matrix,
+                    labels
+                )
+                for data, labels in tqdm(
+                    data_loader,
+                    desc=tqdm_description
+                )
+            ) / len(data_loader)
         return loss, confusion_matrix
     # endregion Test
 
