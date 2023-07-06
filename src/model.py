@@ -97,7 +97,6 @@ class Model:
     # endregion Evaluation mode
 
     # region Layers
-
     @property
     def layers(self) -> list[linear.Linear]:
         """
