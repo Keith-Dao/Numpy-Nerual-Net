@@ -51,7 +51,6 @@ def get_args() -> argparse.Namespace:
         The command line args.
     """
     parser = argparse.ArgumentParser(
-        prog="Neural Net",
         description="Neural network for classifying images of digits."
     )
     parser.add_argument(
@@ -92,7 +91,6 @@ def get_config(config_path: str) -> dict[str, Any]:
 
 def get_train_validation_split(
     config: dict[str, Any],
-    dataset: str
 ) -> float:
     """
     Get the train validation split in the config file.
@@ -102,11 +100,8 @@ def get_train_validation_split(
         dataset: The dataset to load
 
     Returns:
-        The train validation split or 0 if the dataset is test.
+        The train validation split.
     """
-    if dataset == "test":
-        return 0
-
     if config.get("train_validation_split") is None:
         utils.print_warning(
             "No value for train_validation_split was provided."
@@ -148,6 +143,8 @@ def get_batch_size(config: dict[str, Any]) -> int:
     if config.get("batch_size") is None:
         utils.print_warning("Value of batch_size not found, defaulting to 1.")
         return 1
+    if config["batch_size"] <= 0:
+        raise ValueError("batch_size must be greater than 0.")
     return config["batch_size"]
 # endregion Parse config
 
@@ -208,7 +205,11 @@ def get_image_loader(
         )
         return None
 
-    train_validation_split = get_train_validation_split(config, dataset)
+    train_validation_split = (
+        0
+        if dataset == "test"
+        else get_train_validation_split(config)
+    )
     file_formats = get_file_formats(config)
 
     return image_loader.ImageLoader(
@@ -309,7 +310,7 @@ def prompt_save(model_: model.Model) -> None:
         " or "
     )
     enter_path_prompt = (
-        "Enter a file path with the one of the following extensions"
+        "Enter a file path with one of the following extensions"
         f" ({extensions}) or type {stop_code} to cancel saving: "
     )
     save_path = utils.get_path_input(
@@ -324,7 +325,7 @@ def prompt_save(model_: model.Model) -> None:
 
     save_path.parent.mkdir(parents=True, exist_ok=True)
     model_.save(save_path)
-    print(f"Model successfully saved at {save_path.resolve()}.")
+    print(f"Model successfully saved at \"{save_path.resolve()}\".")
 # endregion Save prompt
 
 
@@ -375,9 +376,8 @@ def train_and_test(model_: model.Model, config: dict[str, Any]) -> None:
     test_model(model_, config)
 # endregion Train and test
 
+
 # region Predict
-
-
 def start_prediction(
     model_: model.Model,
     config: dict[str, Any]
@@ -399,32 +399,35 @@ def start_prediction(
     if not utils.is_yes(input("Would you like to predict images? [y/n]: ")):
         return
 
-    model_.eval = True
-    file_formats = get_file_formats(config)
-    preprocessing = image_loader.ImageLoader.STANDARD_PREPROCESSING
-    stop_code = "QUIT"
-    while True:
-        filepath = utils.get_path_input(
-            f"Please enter the path to the image or {stop_code} to exit: ",
-            stop_code
-        )
-        if filepath is None:
-            break
+    with model_.inference_mode():
+        file_formats = get_file_formats(config)
+        preprocessing = image_loader.ImageLoader.STANDARD_PREPROCESSING
+        stop_code = "QUIT"
+        while True:
+            filepath = utils.get_path_input(
+                f"Please enter the path to the image or {stop_code} to exit: ",
+                stop_code
+            )
+            while filepath is not None and not filepath.exists():
+                utils.print_error("The chosen path does not exist.")
+                filepath = utils.get_path_input(
+                    f"Please enter the path to the image or {stop_code} to"
+                    " exit: ",
+                    stop_code
+                )
+            if filepath is None:
+                break
 
-        if filepath.suffix not in file_formats:
-            utils.print_error("Invalid file format.")
-            continue
+            if filepath.suffix not in file_formats:
+                utils.print_error("Invalid file format.")
+                continue
 
-        data = utils.image_to_array(filepath)
-        for preprocess in preprocessing:
-            data = preprocess(data)
+            data = utils.image_to_array(filepath)
+            for preprocess in preprocessing:
+                data = preprocess(data)
 
-        prediction = model_.predict(
-            data  # pyright: ignore [reportGeneralTypeIssues]
-        )[0]
-        print(f"Predicted: {prediction}")
-
-    model_.eval = False
+            prediction = model_.predict(data)[0]
+            print(f"Predicted: {prediction}")
 # endregion Predict
 
 
@@ -446,7 +449,7 @@ def main():
         train_and_test(model_, config)
     start_prediction(model_, config)
     if plt.get_fignums():
-        input("Hit enter to close all opened graphs: ")
+        input("Hit ENTER to close all opened graphs: ")
 
 
 if __name__ == "__main__":

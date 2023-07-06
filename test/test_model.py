@@ -253,6 +253,17 @@ class TestModel:
         """
         with pytest.raises(TypeError):
             model.eval = eval_
+
+    @pytest.mark.parametrize("eval_", [True, False])
+    def test_inference_mode(self, model, eval_):
+        """
+        Tests the inference mode context manager.
+        """
+        model.eval = eval_
+        assert model.eval is eval_
+        with model.inference_mode():
+            assert model.eval is True
+        assert model.eval is eval_
     # endregion Evaluation mode tests
 
     # region Layers tests

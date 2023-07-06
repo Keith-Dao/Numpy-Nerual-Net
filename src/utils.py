@@ -252,7 +252,7 @@ def get_path_input(
     # Set path auto complete
     readline.set_completer_delims(" \t\n=")
     readline.parse_and_bind("tab: complete")
-    path = input(message)
+    path = input(message).rstrip()
     if path == stop_code:
         return None
     path = pathlib.Path(path)
