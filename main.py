@@ -408,6 +408,13 @@ def start_prediction(
                 f"Please enter the path to the image or {stop_code} to exit: ",
                 stop_code
             )
+            while filepath is not None and not filepath.exists():
+                utils.print_error("The chosen path does not exist.")
+                filepath = utils.get_path_input(
+                    f"Please enter the path to the image or {stop_code} to"
+                    " exit: ",
+                    stop_code
+                )
             if filepath is None:
                 break
 
