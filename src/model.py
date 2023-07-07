@@ -722,6 +722,10 @@ class Model:
         )
         if not utils.is_yes(show_graph):
             return
+        if self.total_epochs < 1:
+            utils.print_warning(
+                "The model has no history data. No graphs will be generated.")
+            return
 
         for metric in visualizable_metrics:
             self._generate_history_graph(metric)
